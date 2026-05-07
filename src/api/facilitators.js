@@ -1,0 +1,31 @@
+import apiClient from './client';
+
+// Facilitator API calls
+export const facilitatorAPI = {
+    createFacilitator: async (facilitatorData) => {
+        const response = await apiClient.post('/admin/facilitators', facilitatorData);
+        return response.data;
+    },
+
+    listFacilitators: async (page = 1, pageSize = 20) => {
+        const response = await apiClient.get('/admin/facilitators', {
+            params: { page, page_size: pageSize },
+        });
+        return response.data;
+    },
+
+    getFacilitator: async (facilitatorId) => {
+        const response = await apiClient.get(`/admin/facilitators/${facilitatorId}`);
+        return response.data;
+    },
+
+    updateFacilitator: async (facilitatorId, updateData) => {
+        const response = await apiClient.patch(`/admin/facilitators/${facilitatorId}`, updateData);
+        return response.data;
+    },
+
+    disableFacilitator: async (facilitatorId) => {
+        const response = await apiClient.delete(`/admin/facilitators/${facilitatorId}`);
+        return response.data;
+    },
+};
