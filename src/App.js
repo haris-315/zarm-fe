@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import './App.css';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuthStore } from './context/authStore';
@@ -145,6 +146,7 @@ function App() {
     <Router>
       <AppInitializer>
         <AppRoutes />
+        <Analytics />
       </AppInitializer>
     </Router>
   );
