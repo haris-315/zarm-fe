@@ -1,7 +1,7 @@
 // Configuration file for environment variables
 export const config = {
     // API Configuration
-    API_BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+    API_BASE_URL: process.env.REACT_APP_API_URL || 'http://89.117.50.168:8000',
     API_VERSION: 'v1',
 
     // Feature Flags

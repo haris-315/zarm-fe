@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://89.117.50.168:8000';
 
 // Create axios instance
 const apiClient = axios.create({
@@ -46,7 +46,7 @@ const refreshTokens = async () => {
         const { access_token, refresh_token: newRefreshToken } = response.data;
         localStorage.setItem('access_token', access_token);
         localStorage.setItem('refresh_token', newRefreshToken);
-        
+
         return access_token;
     } catch (error) {
         handleLogout();
@@ -58,12 +58,12 @@ const refreshTokens = async () => {
 apiClient.interceptors.request.use(
     async (config) => {
         const token = localStorage.getItem('access_token');
-        
+
         if (token) {
             try {
                 const decoded = jwtDecode(token);
                 const currentTime = Date.now() / 1000;
-                
+
                 // If token expires in less than 30 seconds, refresh proactively
                 if (decoded.exp - currentTime < 30) {
                     if (!isRefreshing) {
@@ -92,7 +92,7 @@ apiClient.interceptors.request.use(
                         });
                     });
                 }
-                
+
                 config.headers.Authorization = `Bearer ${token}`;
             } catch (e) {
                 // If decoding fails, just continue and let the response interceptor handle 401

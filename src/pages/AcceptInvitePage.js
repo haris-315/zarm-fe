@@ -49,7 +49,7 @@ export const AcceptInvitePage = () => {
         };
 
         fetchInfo();
-    }, [isAuthenticated, token, navigate, logout]);
+    }, [token, isAuthenticated, logout, navigate]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
