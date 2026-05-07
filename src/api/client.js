@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://89.117.50.168:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://agent.wearezylo.com';
 
 // Create axios instance
 const apiClient = axios.create({
