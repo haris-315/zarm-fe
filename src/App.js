@@ -17,6 +17,10 @@ import { OrgMembersPage } from './pages/OrgMembersPage';
 import { SignupPage } from './pages/SignupPage';
 import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
+import { FacilitatorOrgsPage } from './pages/FacilitatorOrgsPage';
+import { OrgSprintsPage } from './pages/OrgSprintsPage';
+import { SprintCanvasPage } from './pages/SprintCanvasPage';
+import { AdminOrgSprintsPage } from './pages/AdminOrgSprintsPage';
 
 // App initializer component
 function AppInitializer({ children }) {
@@ -124,6 +128,22 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin/organizations/:orgId/sprints"
+        element={
+          <ProtectedRoute requiredRoles={['super_admin']}>
+            <AdminOrgSprintsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/sprints/:sprintId"
+        element={
+          <ProtectedRoute requiredRoles={['super_admin']}>
+            <SprintCanvasPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Organization Admin Routes */}
       <Route
@@ -131,6 +151,32 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={['org_admin', 'manager']}>
             <OrgMembersPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Facilitator Sprint Routes */}
+      <Route
+        path="/facilitator/organizations"
+        element={
+          <ProtectedRoute requiredPermissions={['sprint.read']}>
+            <FacilitatorOrgsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/facilitator/organizations/:orgId/sprints"
+        element={
+          <ProtectedRoute requiredPermissions={['sprint.read']}>
+            <OrgSprintsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/facilitator/sprints/:sprintId"
+        element={
+          <ProtectedRoute requiredPermissions={['sprint.read']}>
+            <SprintCanvasPage />
           </ProtectedRoute>
         }
       />

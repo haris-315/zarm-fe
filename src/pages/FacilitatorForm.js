@@ -97,6 +97,7 @@ export const FacilitatorForm = () => {
                 // For update, only send fields that are not empty
                 const updatePayload = {
                     email: formData.email || undefined,
+                    full_name: formData.full_name || undefined,
                     title: formData.title || undefined,
                     status: formData.status || undefined,
                 };

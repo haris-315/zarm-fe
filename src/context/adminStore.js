@@ -119,7 +119,15 @@ export const useAdminStore = create((set, get) => ({
     updateOrgLogo: async (file) => {
         set({ isLoading: true, error: null });
         try {
-            const updatedOrg = await organizationAPI.updateMyOrgLogo(file);
+            const response = await organizationAPI.updateMyOrgLogo(file);
+            
+            // If it's a background job response, don't overwrite the state
+            if (response.message && !response.id) {
+                set({ isLoading: false });
+                return response;
+            }
+
+            const updatedOrg = response;
             
             // Sync with auth store
             const authStore = useAuthStore.getState();
@@ -145,7 +153,15 @@ export const useAdminStore = create((set, get) => ({
     updateOrgLogoBySuperAdmin: async (orgId, file) => {
         set({ isLoading: true, error: null });
         try {
-            const updatedOrg = await organizationAPI.updateLogo(orgId, file);
+            const response = await organizationAPI.updateLogo(orgId, file);
+
+            // If it's a background job response, don't overwrite the state
+            if (response.message && !response.id) {
+                set({ isLoading: false });
+                return response;
+            }
+
+            const updatedOrg = response;
 
             // Sync with auth store
             const authStore = useAuthStore.getState();

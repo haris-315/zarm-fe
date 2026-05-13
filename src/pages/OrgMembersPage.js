@@ -34,6 +34,12 @@ export const OrgMembersPage = () => {
         role: 'member',
         extra_permissions: [],
     });
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        id: '',
+        role: 'member',
+        extra_permissions: [],
+    });
 
     useEffect(() => {
         if (!(roles.includes('org_admin') || roles.includes('manager'))) {
@@ -62,10 +68,16 @@ export const OrgMembersPage = () => {
         }
     };
 
-    const handleUpdateMemberRole = async (memberId, newRole) => {
+    const handleUpdateMember = async (e) => {
+        if (e) e.preventDefault();
         try {
             setSubmitting(true);
-            await updateOrgMember(memberId, { role: newRole });
+            const payload = {
+                role: editFormData.role,
+                extra_permissions: editFormData.extra_permissions,
+            };
+            await updateOrgMember(editFormData.id, payload);
+            setEditModalOpen(false);
             setEditingMember(null);
         } catch (err) {
             console.error('Failed to update member:', err);
@@ -108,8 +120,41 @@ export const OrgMembersPage = () => {
     };
 
     const handleInviteFormChange = (e) => {
-        const { name, value } = e.target;
-        setInviteFormData((prev) => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        if (type === 'checkbox') {
+            setInviteFormData((prev) => {
+                const currentPerms = prev.extra_permissions || [];
+                if (checked) {
+                    return { ...prev, extra_permissions: [...currentPerms, value] };
+                } else {
+                    return {
+                        ...prev,
+                        extra_permissions: currentPerms.filter((p) => p !== value),
+                    };
+                }
+            });
+        } else {
+            setInviteFormData((prev) => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handleEditFormChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        if (type === 'checkbox') {
+            setEditFormData((prev) => {
+                const currentPerms = prev.extra_permissions || [];
+                if (checked) {
+                    return { ...prev, extra_permissions: [...currentPerms, value] };
+                } else {
+                    return {
+                        ...prev,
+                        extra_permissions: currentPerms.filter((p) => p !== value),
+                    };
+                }
+            });
+        } else {
+            setEditFormData((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
     const filteredMembers = orgMembers.filter(
@@ -203,6 +248,7 @@ export const OrgMembersPage = () => {
                                             <th>Full Name</th>
                                             <th>Title</th>
                                             <th>Role</th>
+                                            <th>Extra Permissions</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -216,36 +262,40 @@ export const OrgMembersPage = () => {
                                                 <td>{member.full_name || '—'}</td>
                                                 <td>{member.title || '—'}</td>
                                                 <td>
-                                                    {editingMember === member.id ? (
-                                                        <select
-                                                            value={member.role || 'member'}
-                                                            onChange={(e) =>
-                                                                handleUpdateMemberRole(
-                                                                    member.id,
-                                                                    e.target.value
-                                                                )
-                                                            }
-                                                            disabled={submitting}
-                                                        >
-                                                            <option value="member">Member</option>
-                                                            <option value="manager">Manager</option>
-                                                            <option value="org_admin">
-                                                                Organization Admin
-                                                            </option>
-                                                        </select>
-                                                    ) : (
-                                                        <span
-                                                            className="role-badge"
-                                                            style={{
-                                                                padding: '4px 8px',
-                                                                background: '#e0e7ff',
-                                                                borderRadius: '4px',
-                                                                fontSize: '12px',
-                                                            }}
-                                                        >
-                                                            {member.role || 'member'}
-                                                        </span>
-                                                    )}
+                                                    <span
+                                                        className="role-badge"
+                                                        style={{
+                                                            padding: '4px 8px',
+                                                            background: '#e0e7ff',
+                                                            borderRadius: '4px',
+                                                            fontSize: '12px',
+                                                        }}
+                                                    >
+                                                        {member.role || 'member'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                        {member.extra_permissions && member.extra_permissions.length > 0 ? (
+                                                            member.extra_permissions.map(perm => (
+                                                                <span 
+                                                                    key={perm}
+                                                                    style={{
+                                                                        padding: '2px 6px',
+                                                                        background: '#f1f5f9',
+                                                                        border: '1px solid #e2e8f0',
+                                                                        borderRadius: '3px',
+                                                                        fontSize: '11px',
+                                                                        color: '#475569'
+                                                                    }}
+                                                                >
+                                                                    {perm}
+                                                                </span>
+                                                            ))
+                                                        ) : (
+                                                            <span style={{ color: '#94a3b8', fontSize: '12px' }}>None</span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <span
@@ -256,40 +306,30 @@ export const OrgMembersPage = () => {
                                                 </td>
                                                 <td>
                                                     <div className="action-buttons">
-                                                        {editingMember !== member.id ? (
-                                                            <>
-                                                                <button
-                                                                    onClick={() =>
-                                                                        setEditingMember(member.id)
-                                                                    }
-                                                                    className="btn-icon edit"
-                                                                    title="Edit Role"
-                                                                    disabled={submitting}
-                                                                >
-                                                                    ✎
-                                                                </button>
-                                                                <button
-                                                                    onClick={() =>
-                                                                        setDeleteConfirm(member.id)
-                                                                    }
-                                                                    className="btn-icon delete"
-                                                                    title="Remove"
-                                                                >
-                                                                    🗑️
-                                                                </button>
-                                                            </>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() =>
-                                                                    setEditingMember(null)
-                                                                }
-                                                                className="btn-icon view"
-                                                                title="Cancel"
-                                                                disabled={submitting}
-                                                            >
-                                                                ✕
-                                                            </button>
-                                                        )}
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditFormData({
+                                                                    id: member.id,
+                                                                    role: member.role || 'member',
+                                                                    extra_permissions: member.extra_permissions || [],
+                                                                });
+                                                                setEditModalOpen(true);
+                                                            }}
+                                                            className="btn-icon edit"
+                                                            title="Edit Member"
+                                                            disabled={submitting}
+                                                        >
+                                                            ✎
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                setDeleteConfirm(member.id)
+                                                            }
+                                                            className="btn-icon delete"
+                                                            title="Remove"
+                                                        >
+                                                            🗑️
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -362,27 +402,35 @@ export const OrgMembersPage = () => {
 
                             {availablePermissions && availablePermissions.length > 0 && (
                                 <div className="form-group">
-                                    <label>Extra Roles/Permissions</label>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
-                                        {availablePermissions.map(permission => (
-                                            <label key={permission.code} style={{ display: 'flex', alignItems: 'center', fontWeight: 'normal', fontSize: '14px' }}>
+                                    <label>Extra Permissions</label>
+                                    <div style={{ 
+                                        display: 'grid', 
+                                        gridTemplateColumns: '1fr 1fr', 
+                                        gap: '10px', 
+                                        marginTop: '10px',
+                                        padding: '12px',
+                                        background: '#f8fafc',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e2e8f0'
+                                    }}>
+                                        {availablePermissions.map(perm => (
+                                            <label key={perm.code} style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: '8px',
+                                                fontSize: '13px',
+                                                cursor: 'pointer',
+                                                fontWeight: 'normal'
+                                            }}>
                                                 <input
                                                     type="checkbox"
-                                                    value={permission.code}
-                                                    checked={inviteFormData.extra_permissions.includes(permission.code)}
-                                                    onChange={(e) => {
-                                                        const { checked, value } = e.target;
-                                                        setInviteFormData(prev => ({
-                                                            ...prev,
-                                                            extra_permissions: checked 
-                                                                ? [...prev.extra_permissions, value]
-                                                                : prev.extra_permissions.filter(p => p !== value)
-                                                        }));
-                                                    }}
+                                                    name="extra_permissions"
+                                                    value={perm.code}
+                                                    checked={inviteFormData.extra_permissions.includes(perm.code)}
+                                                    onChange={handleInviteFormChange}
                                                     disabled={submitting}
-                                                    style={{ marginRight: '8px', width: 'auto' }}
                                                 />
-                                                {permission.code}
+                                                {perm.code}
                                             </label>
                                         ))}
                                     </div>
@@ -417,6 +465,85 @@ export const OrgMembersPage = () => {
                                     disabled={submitting}
                                 >
                                     {submitting ? 'Sending Invite...' : 'Send Invite'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {editModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Edit Member</h3>
+                        <form onSubmit={handleUpdateMember}>
+                            <div className="form-group">
+                                <label htmlFor="edit-role">Role</label>
+                                <select
+                                    id="edit-role"
+                                    name="role"
+                                    value={editFormData.role}
+                                    onChange={handleEditFormChange}
+                                    disabled={submitting}
+                                >
+                                    <option value="member">Member</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="org_admin">Organization Admin</option>
+                                </select>
+                            </div>
+
+                            {availablePermissions && availablePermissions.length > 0 && (
+                                <div className="form-group">
+                                    <label>Extra Permissions</label>
+                                    <div style={{ 
+                                        display: 'grid', 
+                                        gridTemplateColumns: '1fr 1fr', 
+                                        gap: '10px', 
+                                        marginTop: '10px',
+                                        padding: '12px',
+                                        background: '#f8fafc',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e2e8f0'
+                                    }}>
+                                        {availablePermissions.map(perm => (
+                                            <label key={perm.code} style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: '8px',
+                                                fontSize: '13px',
+                                                cursor: 'pointer',
+                                                fontWeight: 'normal'
+                                            }}>
+                                                <input
+                                                    type="checkbox"
+                                                    name="extra_permissions"
+                                                    value={perm.code}
+                                                    checked={editFormData.extra_permissions.includes(perm.code)}
+                                                    onChange={handleEditFormChange}
+                                                    disabled={submitting}
+                                                />
+                                                {perm.code}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="modal-actions">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditModalOpen(false)}
+                                    className="btn-secondary"
+                                    disabled={submitting}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    disabled={submitting}
+                                >
+                                    {submitting ? 'Saving...' : 'Save Changes'}
                                 </button>
                             </div>
                         </form>

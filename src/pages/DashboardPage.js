@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { userAPI } from '../api';
+import { sprintAPI } from '../api/sprints';
 import { useAuthStore } from '../context/authStore';
 import '../styles/Dashboard.css';
 
@@ -18,11 +18,19 @@ export const DashboardPage = () => {
             return;
         }
 
+        // Redirect facilitators to their organizations view
+        if (user?.user_type === 'facilitator' || roles.includes('facilitator')) {
+            navigate('/facilitator/organizations', { replace: true });
+            return;
+        }
+
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const sprintsData = await userAPI.listSprints();
-                setSprints(sprintsData);
+                if (organization?.id) {
+                    const sprintsData = await sprintAPI.listSprints(organization.id);
+                    setSprints(sprintsData.items || []);
+                }
             } catch (err) {
                 setError('Failed to load sprints');
                 console.error(err);
@@ -32,7 +40,7 @@ export const DashboardPage = () => {
         };
 
         fetchData();
-    }, [roles, navigate, user?.user_type]);
+    }, [roles, navigate, user?.user_type, organization?.id]);
 
     const handleLogout = async () => {
         await logout();

@@ -249,7 +249,7 @@ export const OrganizationDetail = () => {
                                             <div>
                                                 <strong>Status: </strong>
                                                 <span className={`status-badge status-${selectedOrganization.status}`}>
-                                                    {selectedOrganization.status.toUpperCase()}
+                                                    {selectedOrganization.status?.toUpperCase() || ''}
                                                 </span>
                                                 {selectedOrganization.status === 'rejected' && selectedOrganization.rejection_reason && (
                                                     <p style={{ marginTop: '5px', fontSize: '0.9em' }}>

@@ -195,6 +195,13 @@ export const OrganizationsList = () => {
                                                         >
                                                             👥
                                                         </Link>
+                                                        <Link
+                                                            to={`/admin/organizations/${org.id}/sprints`}
+                                                            className="btn-icon view"
+                                                            title="Sprints"
+                                                        >
+                                                            🏃
+                                                        </Link>
                                                         <button
                                                             onClick={() =>
                                                                 setActionConfirm({
