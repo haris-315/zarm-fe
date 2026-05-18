@@ -28,4 +28,14 @@ export const facilitatorAPI = {
         const response = await apiClient.delete(`/admin/facilitators/${facilitatorId}`);
         return response.data;
     },
+
+    assignRole: async (facilitatorId, roleId) => {
+        const response = await apiClient.post(`/admin/facilitators/${facilitatorId}/role`, { role_id: roleId });
+        return response.data;
+    },
+
+    setExtraPermissions: async (facilitatorId, permissions) => {
+        const response = await apiClient.post(`/admin/facilitators/${facilitatorId}/extra-permissions`, { permissions });
+        return response.data;
+    },
 };

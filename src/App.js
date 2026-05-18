@@ -14,6 +14,7 @@ import { OrganizationDetail } from './pages/OrganizationDetail';
 import { OrganizationMembers } from './pages/OrganizationMembers';
 import { OrganizationsList } from './pages/OrganizationsList';
 import { OrgMembersPage } from './pages/OrgMembersPage';
+import { RolesPage } from './pages/RolesPage';
 import { SignupPage } from './pages/SignupPage';
 import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
@@ -63,6 +64,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/roles"
+        element={
+          <ProtectedRoute requiredRoles={['super_admin']}>
+            <RolesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/facilitators"
         element={
           <ProtectedRoute requiredRoles={['super_admin']}>
@@ -94,7 +103,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/admin/notifications"
         element={
@@ -103,7 +111,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      {/* Organization Routes */}
+
+      {/* Organization Routes (Super Admin view) */}
       <Route
         path="/admin/organizations"
         element={
@@ -145,12 +154,20 @@ function AppRoutes() {
         }
       />
 
-      {/* Organization Admin Routes */}
+      {/* Organization Admin / Member Routes */}
       <Route
         path="/org/members"
         element={
           <ProtectedRoute requiredRoles={['org_admin', 'manager']}>
             <OrgMembersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/org/sprints/:sprintId"
+        element={
+          <ProtectedRoute requiredRoles={['org_admin', 'manager', 'member']}>
+            <SprintCanvasPage />
           </ProtectedRoute>
         }
       />

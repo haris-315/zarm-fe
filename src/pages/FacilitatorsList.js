@@ -8,42 +8,77 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { DataTable } from '../components/DataTable';
 import { Modal } from '../components/Modal';
-import styles from './OrganizationsList.module.css'; // Reusing similar styles
+import { ExtraPermissionsModal } from '../components/ExtraPermissionsModal';
+import { Toast } from '../components/Toast';
+import styles from './FacilitatorsList.module.css';
+
+const GearIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+);
 
 export const FacilitatorsList = () => {
     const navigate = useNavigate();
-    const { user, roles } = useAuthStore();
+    const { user, roles: userRoles } = useAuthStore();
     const {
         facilitators,
         totalFacilitators,
         currentPage,
         pageSize,
         isLoading,
+        roles: platformRoles,
+        availableRolePermissions,
         error,
         fetchFacilitators,
+        fetchRoles,
+        fetchAvailableRolePermissions,
         setPage,
         disableFacilitator,
+        assignFacilitatorRole,
+        setFacilitatorExtraPermissions,
         clearError,
     } = useAdminStore();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [roleDropdown, setRoleDropdown] = useState(null); // facilitator id
+    const [permTarget, setPermTarget] = useState(null);     // facilitator object
+    const [toast, setToast] = useState(null);
 
     useEffect(() => {
-        if (!(roles.includes('super_admin') || user?.user_type === 'super_admin')) {
+        if (!(userRoles.includes('super_admin') || user?.user_type === 'super_admin')) {
             navigate('/dashboard');
             return;
         }
         fetchFacilitators(currentPage, pageSize);
-    }, [currentPage, pageSize, roles, user?.user_type, navigate, fetchFacilitators]);
+        fetchRoles();
+        fetchAvailableRolePermissions();
+    }, [currentPage, pageSize, userRoles, user?.user_type, navigate, fetchFacilitators, fetchRoles, fetchAvailableRolePermissions]);
 
     const handleDisable = async (facilitatorId) => {
         try {
             await disableFacilitator(facilitatorId);
             setDeleteConfirm(null);
+            setToast({ type: 'success', message: 'Facilitator disabled' });
         } catch (err) {
-            console.error('Failed to disable facilitator:', err);
+            setToast({ type: 'error', message: 'Failed to disable facilitator' });
         }
+    };
+
+    const handleRoleAssign = async (facilitatorId, roleId) => {
+        setRoleDropdown(null);
+        try {
+            await assignFacilitatorRole(facilitatorId, roleId);
+            setToast({ type: 'success', message: 'Role assigned successfully' });
+        } catch {
+            setToast({ type: 'error', message: 'Failed to assign role' });
+        }
+    };
+
+    const handleSaveExtraPerms = async (newPerms) => {
+        if (!permTarget) return;
+        await setFacilitatorExtraPermissions(permTarget.id, newPerms);
     };
 
     const filteredFacilitators = facilitators.filter(
@@ -52,30 +87,81 @@ export const FacilitatorsList = () => {
             c.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const getAssignedRoleName = (facilitator) => {
+        if (facilitator.role_name) return facilitator.role_name;
+        if (facilitator.role) {
+            const found = platformRoles.find((r) => r.id === facilitator.role || r.name === facilitator.role);
+            return found?.name || facilitator.role;
+        }
+        return null;
+    };
+
     const columns = [
-        { 
-            key: 'email', 
+        {
+            key: 'email',
             label: 'Facilitator',
             render: (val, row) => (
-                <div className={styles.orgCell}>
-                    <div className={styles.logo}>
-                        {row.avatar_url ? <img src={row.avatar_url} alt="" /> : val.charAt(0).toUpperCase()}
+                <div className={styles.userCell}>
+                    <div className={styles.avatar}>
+                        {row.avatar_url
+                            ? <img src={row.avatar_url} alt="" />
+                            : val.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                        <div style={{ fontWeight: 600 }}>{row.full_name || 'No Name'}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{val}</div>
+                        <div className={styles.userName}>{row.full_name || 'No Name'}</div>
+                        <div className={styles.userEmail}>{val}</div>
                     </div>
                 </div>
-            )
+            ),
         },
-        { key: 'title', label: 'Title', render: (val) => val || '—' },
-        { 
-            key: 'status', 
-            label: 'Status', 
-            render: (val) => <Badge status={val}>{val}</Badge> 
+        { key: 'title', label: 'Title', render: (val) => val || <span className={styles.muted}>—</span> },
+        {
+            key: 'status',
+            label: 'Status',
+            render: (val) => <Badge status={val}>{val}</Badge>,
         },
-        { 
-            key: 'actions', 
+        {
+            key: 'role',
+            label: 'Role',
+            render: (_, row) => {
+                const roleName = getAssignedRoleName(row);
+                const isOpen = roleDropdown === row.id;
+                return (
+                    <div className={styles.roleCell}>
+                        <div className={styles.roleDropdownWrapper}>
+                            <button
+                                className={`${styles.roleBtn} ${!roleName ? styles.unassigned : ''}`}
+                                onClick={(e) => { e.stopPropagation(); setRoleDropdown(isOpen ? null : row.id); }}
+                            >
+                                {roleName || 'Unassigned'}
+                                <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </button>
+                            {isOpen && (
+                                <div className={styles.dropdown} onClick={(e) => e.stopPropagation()}>
+                                    <div className={styles.dropdownHeader}>Assign Role</div>
+                                    {platformRoles.length === 0 ? (
+                                        <div className={styles.dropdownEmpty}>No roles available</div>
+                                    ) : (
+                                        platformRoles.map((r) => (
+                                            <button
+                                                key={r.id}
+                                                className={`${styles.dropdownItem} ${roleName === r.name ? styles.dropdownItemActive : ''}`}
+                                                onClick={() => handleRoleAssign(row.id, r.id)}
+                                            >
+                                                {r.name}
+                                                {r.is_custom && <span className={styles.customTag}>Custom</span>}
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            key: 'actions',
             label: 'Actions',
             render: (_, row) => (
                 <div className={styles.actions}>
@@ -85,21 +171,31 @@ export const FacilitatorsList = () => {
                     <Link to={`/admin/facilitators/${row.id}/edit`}>
                         <Button variant="ghost" size="sm">Edit</Button>
                     </Link>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(row.id)}>Disable</Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Manage extra permissions"
+                        onClick={(e) => { e.stopPropagation(); setPermTarget(row); }}
+                    >
+                        <GearIcon />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteConfirm(row.id); }}>
+                        Disable
+                    </Button>
                 </div>
-            )
-        }
+            ),
+        },
     ];
 
     const totalPages = Math.ceil(totalFacilitators / pageSize);
 
     return (
-        <AppShell 
+        <AppShell
             title="Facilitators"
             actions={
                 <div className={styles.topActions}>
-                    <Input 
-                        placeholder="Search facilitators..." 
+                    <Input
+                        placeholder="Search facilitators..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className={styles.search}
@@ -108,50 +204,76 @@ export const FacilitatorsList = () => {
                 </div>
             }
         >
-            {error && <div className={styles.error}>{error} <button onClick={clearError}>×</button></div>}
+            {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
+            {error && (
+                <div className={styles.error}>{error} <button onClick={clearError}>×</button></div>
+            )}
+
+            {/* Close dropdown on outside click */}
+            {roleDropdown && (
+                <div className={styles.dropdownOverlay} onClick={() => setRoleDropdown(null)} />
+            )}
 
             <div className={styles.tableCard}>
-                <DataTable 
-                    columns={columns} 
-                    data={filteredFacilitators} 
+                <DataTable
+                    columns={columns}
+                    data={filteredFacilitators}
                     loading={isLoading}
                     onRowClick={(row) => navigate(`/admin/facilitators/${row.id}`)}
                 />
             </div>
 
-            <div className={styles.pagination}>
-                <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    disabled={currentPage === 1}
-                    onClick={() => setPage(currentPage - 1)}
-                >
-                    Previous
-                </Button>
-                <div className={styles.pageInfo}>
-                    Page {currentPage} of {totalPages}
+            {totalPages > 1 && (
+                <div className={styles.pagination}>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => setPage(currentPage - 1)}
+                    >
+                        Previous
+                    </Button>
+                    <div className={styles.pageInfo}>
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setPage(currentPage + 1)}
+                    >
+                        Next
+                    </Button>
                 </div>
-                <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    disabled={currentPage === totalPages}
-                    onClick={() => setPage(currentPage + 1)}
-                >
-                    Next
-                </Button>
-            </div>
+            )}
 
+            {/* Disable confirmation */}
             <Modal
                 isOpen={!!deleteConfirm}
                 onClose={() => setDeleteConfirm(null)}
                 title="Disable Facilitator?"
             >
-                <p>Are you sure you want to disable this facilitator account? They will no longer be able to log in.</p>
+                <p className={styles.confirmText}>
+                    Are you sure you want to disable this facilitator account? They will no longer be able to log in.
+                </p>
                 <div className={styles.modalFooter}>
                     <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-                    <Button variant="danger" onClick={() => handleDisable(deleteConfirm)}>Disable Account</Button>
+                    <Button variant="danger" loading={isLoading} onClick={() => handleDisable(deleteConfirm)}>
+                        Disable Account
+                    </Button>
                 </div>
             </Modal>
+
+            {/* Extra Permissions Modal */}
+            <ExtraPermissionsModal
+                isOpen={!!permTarget}
+                onClose={() => setPermTarget(null)}
+                targetName={permTarget?.full_name || permTarget?.email || ''}
+                rolePermissions={permTarget?.role_permissions || []}
+                extraPermissions={permTarget?.extra_permissions || []}
+                availablePermissions={availableRolePermissions}
+                onSave={handleSaveExtraPerms}
+            />
         </AppShell>
     );
 };

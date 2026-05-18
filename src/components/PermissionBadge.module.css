@@ -1,0 +1,63 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* sprint.* → blue */
+.sprint {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+/* finding.* → green */
+.finding {
+  background: #F0FDF4;
+  color: #16A34A;
+}
+
+/* decision.* → purple */
+.decision {
+  background: #FAF5FF;
+  color: #9333EA;
+}
+
+/* organization.* → orange */
+.organization {
+  background: #FFF7ED;
+  color: #EA580C;
+}
+
+/* report.* → teal */
+.report {
+  background: #F0FDFA;
+  color: #0D9488;
+}
+
+/* default */
+.other {
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}

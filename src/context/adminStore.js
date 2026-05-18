@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { facilitatorAPI } from '../api/facilitators';
 import { organizationAPI } from '../api/organizations';
 import { orgMembersAPI } from '../api/orgMembers';
+import { rolesAPI } from '../api/roles';
 import { useAuthStore } from './authStore';
 
 export const useAdminStore = create((set, get) => ({
@@ -557,4 +558,145 @@ export const useAdminStore = create((set, get) => ({
 
     // Clear org members
     clearOrgMembers: () => set({ orgMembers: [] }),
+
+    // Assign role to org member
+    assignOrgMemberRole: async (userId, roleId) => {
+        set({ isLoading: true, error: null });
+        try {
+            const updatedMember = await orgMembersAPI.assignRole(userId, roleId);
+            set((state) => ({
+                orgMembers: state.orgMembers.map((m) => m.id === userId ? { ...m, ...updatedMember } : m),
+                isLoading: false,
+            }));
+            return updatedMember;
+        } catch (error) {
+            const errorMessage = error.response?.data?.detail || error.message;
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
+
+    // Set extra permissions for org member
+    setOrgMemberExtraPermissions: async (userId, permissions) => {
+        set({ isLoading: true, error: null });
+        try {
+            const updatedMember = await orgMembersAPI.setExtraPermissions(userId, permissions);
+            set((state) => ({
+                orgMembers: state.orgMembers.map((m) => m.id === userId ? { ...m, ...updatedMember } : m),
+                isLoading: false,
+            }));
+            return updatedMember;
+        } catch (error) {
+            const errorMessage = error.response?.data?.detail || error.message;
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
+
+    // Assign role to facilitator
+    assignFacilitatorRole: async (facilitatorId, roleId) => {
+        set({ isLoading: true, error: null });
+        try {
+            const updated = await facilitatorAPI.assignRole(facilitatorId, roleId);
+            set((state) => ({
+                facilitators: state.facilitators.map((f) => f.id === facilitatorId ? { ...f, ...updated } : f),
+                isLoading: false,
+            }));
+            return updated;
+        } catch (error) {
+            const errorMessage = error.response?.data?.detail || error.message;
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
+
+    // Set extra permissions for facilitator
+    setFacilitatorExtraPermissions: async (facilitatorId, permissions) => {
+        set({ isLoading: true, error: null });
+        try {
+            const updated = await facilitatorAPI.setExtraPermissions(facilitatorId, permissions);
+            set((state) => ({
+                facilitators: state.facilitators.map((f) => f.id === facilitatorId ? { ...f, ...updated } : f),
+                isLoading: false,
+            }));
+            return updated;
+        } catch (error) {
+            const errorMessage = error.response?.data?.detail || error.message;
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
+
+    // ─── Roles management ───────────────────────────────────────────────
+    roles: [],
+    availableRolePermissions: [],
+    rolesLoading: false,
+
+    fetchRoles: async () => {
+        set({ rolesLoading: true, error: null });
+        try {
+            const data = await rolesAPI.listRoles();
+            set({ roles: Array.isArray(data) ? data : data.items || [], rolesLoading: false });
+            return data;
+        } catch (error) {
+            const errorMessage = error.response?.data?.detail || error.message;
+            set({ error: errorMessage, rolesLoading: false });
+            throw error;
+        }
+    },
+
+    fetchAvailableRolePermissions: async () => {
+        try {
+            const data = await rolesAPI.getAvailablePermissions();
+            set({ availableRolePermissions: Array.isArray(data) ? data : data.permissions || [] });
+            return data;
+        } catch (error) {
+            console.error('Failed to fetch available role permissions:', error);
+            throw error;
+        }
+    },
+
+    createRole: async (name, description, permissionCodes) => {
+        set({ isLoading: true, error: null });
+        try {
+            const newRole = await rolesAPI.createRole({ name, description, permissions: permissionCodes });
+            set((state) => ({ roles: [...state.roles, newRole], isLoading: false }));
+            return newRole;
+        } catch (error) {
+            const errorMessage = error.response?.data?.detail || error.message;
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
+
+    updateRole: async (roleId, description, permissionCodes) => {
+        set({ isLoading: true, error: null });
+        try {
+            const updatedRole = await rolesAPI.updateRole(roleId, { description, permissions: permissionCodes });
+            set((state) => ({
+                roles: state.roles.map((r) => r.id === roleId ? updatedRole : r),
+                isLoading: false,
+            }));
+            return updatedRole;
+        } catch (error) {
+            const errorMessage = error.response?.data?.detail || error.message;
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
+
+    deleteRole: async (roleId) => {
+        set({ isLoading: true, error: null });
+        try {
+            await rolesAPI.deleteRole(roleId);
+            set((state) => ({
+                roles: state.roles.filter((r) => r.id !== roleId),
+                isLoading: false,
+            }));
+        } catch (error) {
+            const errorMessage = error.response?.data?.detail || error.message;
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
 }));
