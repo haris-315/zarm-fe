@@ -20,12 +20,9 @@ export const NotificationsPage = () => {
     } = useAdminStore();
 
     useEffect(() => {
-        if (!(roles.includes('super_admin') || user?.user_type === 'super_admin')) {
-            navigate('/dashboard');
-            return;
-        }
         fetchOrganizations(1, 100);
-    }, [roles, user?.user_type, navigate, fetchOrganizations]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const pendingOrganizations = organizations.filter(org => org.status === 'pending');
 

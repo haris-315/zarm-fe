@@ -37,19 +37,10 @@ export const FacilitatorForm = () => {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        if (!(roles.includes('super_admin') || user?.user_type === 'super_admin')) {
-            navigate('/dashboard');
-            return;
-        }
-
-        if (isEditMode) {
-            fetchFacilitator(facilitatorId);
-        }
-
-        return () => {
-            clearSelectedFacilitator();
-        };
-    }, [isEditMode, facilitatorId, roles, user?.user_type, navigate, fetchFacilitator, clearSelectedFacilitator]);
+        if (isEditMode) fetchFacilitator(facilitatorId);
+        return () => clearSelectedFacilitator();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isEditMode, facilitatorId]);
 
     useEffect(() => {
         if (isEditMode && selectedFacilitator) {

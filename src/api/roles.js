@@ -1,8 +1,10 @@
 import apiClient from './client';
 
 export const rolesAPI = {
-    listRoles: async () => {
-        const response = await apiClient.get('/admin/roles');
+    listRoles: async (page = 1, pageSize = 100) => {
+        const response = await apiClient.get('/admin/roles', {
+            params: { page, page_size: pageSize },
+        });
         return response.data;
     },
 
@@ -11,13 +13,13 @@ export const rolesAPI = {
         return response.data;
     },
 
-    createRole: async (roleData) => {
-        const response = await apiClient.post('/admin/roles', roleData);
+    createRole: async ({ name, description, permission_codes }) => {
+        const response = await apiClient.post('/admin/roles', { name, description, permission_codes });
         return response.data;
     },
 
-    updateRole: async (roleId, updateData) => {
-        const response = await apiClient.patch(`/admin/roles/${roleId}`, updateData);
+    updateRole: async (roleId, { description, permission_codes }) => {
+        const response = await apiClient.patch(`/admin/roles/${roleId}`, { description, permission_codes });
         return response.data;
     },
 

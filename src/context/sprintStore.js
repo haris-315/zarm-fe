@@ -43,7 +43,7 @@ export const useSprintStore = create((set, get) => ({
         try {
             const data = await sprintAPI.listOrganizations(page, get().orgsPageSize);
             set({
-                organizations: data,
+                organizations: Array.isArray(data) ? data : (data.items || []),
                 orgsPage: page,
                 isLoading: false,
             });

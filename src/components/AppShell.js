@@ -7,7 +7,10 @@ export const AppShell = ({ children, title, actions }) => {
   const { user, roles, permissions, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const isAdmin = roles.includes('super_admin') || user?.user_type === 'super_admin';
+  const isAdmin =
+    roles.includes('super_admin') ||
+    user?.user_type === 'super_admin' ||
+    user?.role?.name === 'super_admin';
 
   // An org user is anyone with an org-scoped role, regardless of extra permissions.
   const isOrgUser =

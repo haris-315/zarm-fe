@@ -5,6 +5,15 @@ import { orgMembersAPI } from '../api/orgMembers';
 import { rolesAPI } from '../api/roles';
 import { useAuthStore } from './authStore';
 
+const extractError = (error) => {
+    const detail = error.response?.data?.detail;
+    if (Array.isArray(detail)) {
+        return detail.map((e) => e.msg || JSON.stringify(e)).join(', ');
+    }
+    if (typeof detail === 'string') return detail;
+    return error.message || 'An unexpected error occurred';
+};
+
 export const useAdminStore = create((set, get) => ({
     // Facilitators state
     facilitators: [],
@@ -29,7 +38,7 @@ export const useAdminStore = create((set, get) => ({
             });
             return response;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -43,7 +52,7 @@ export const useAdminStore = create((set, get) => ({
             set({ selectedFacilitator: facilitator, isLoading: false });
             return facilitator;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -61,7 +70,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return newFacilitator;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -87,7 +96,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updatedFacilitator;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -107,7 +116,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return disabledFacilitator;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -145,7 +154,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updatedOrg;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -179,7 +188,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updatedOrg;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -217,7 +226,7 @@ export const useAdminStore = create((set, get) => ({
             });
             return response;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -231,7 +240,7 @@ export const useAdminStore = create((set, get) => ({
             set({ selectedOrganization: organization, isLoading: false });
             return organization;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -252,7 +261,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updatedOrg;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -273,7 +282,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return suspendedOrg;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -294,7 +303,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return activatedOrg;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -315,7 +324,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return approvedOrg;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -336,7 +345,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return rejectedOrg;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -359,7 +368,7 @@ export const useAdminStore = create((set, get) => ({
             });
             return response;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message || error.toString();
+            const errorMessage = extractError(error) || error.toString();
             console.error('Failed to fetch organization members:', {
                 orgId,
                 error: error,
@@ -383,7 +392,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updatedMember;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -400,7 +409,7 @@ export const useAdminStore = create((set, get) => ({
                 isLoading: false,
             }));
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -418,7 +427,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return newMember;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -470,7 +479,7 @@ export const useAdminStore = create((set, get) => ({
             });
             return response;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message || error.toString();
+            const errorMessage = extractError(error) || error.toString();
             console.error('Failed to fetch org members:', {
                 error: error,
                 errorMessage: errorMessage,
@@ -493,7 +502,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updatedMember;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -510,7 +519,7 @@ export const useAdminStore = create((set, get) => ({
                 isLoading: false,
             }));
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -528,7 +537,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return newMember;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -547,7 +556,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updatedMember;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -570,7 +579,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updatedMember;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -587,7 +596,41 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updatedMember;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
+
+    // Assign role to an organization member (admin view — updates organizationMembers state)
+    assignAdminOrgMemberRole: async (userId, roleId) => {
+        set({ isLoading: true, error: null });
+        try {
+            const updated = await orgMembersAPI.assignRole(userId, roleId);
+            set((state) => ({
+                organizationMembers: state.organizationMembers.map((m) => m.id === userId ? { ...m, ...updated } : m),
+                isLoading: false,
+            }));
+            return updated;
+        } catch (error) {
+            const errorMessage = extractError(error);
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
+
+    // Set extra permissions for an organization member (admin view)
+    setAdminOrgMemberExtraPermissions: async (userId, permissions) => {
+        set({ isLoading: true, error: null });
+        try {
+            const updated = await orgMembersAPI.setExtraPermissions(userId, permissions);
+            set((state) => ({
+                organizationMembers: state.organizationMembers.map((m) => m.id === userId ? { ...m, ...updated } : m),
+                isLoading: false,
+            }));
+            return updated;
+        } catch (error) {
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -604,7 +647,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updated;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -621,7 +664,7 @@ export const useAdminStore = create((set, get) => ({
             }));
             return updated;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -636,10 +679,12 @@ export const useAdminStore = create((set, get) => ({
         set({ rolesLoading: true, error: null });
         try {
             const data = await rolesAPI.listRoles();
-            set({ roles: Array.isArray(data) ? data : data.items || [], rolesLoading: false });
+            // API may return a paginated envelope {items, total, ...} or a plain array
+            const items = Array.isArray(data) ? data : (data.items ?? []);
+            set({ roles: items, rolesLoading: false });
             return data;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, rolesLoading: false });
             throw error;
         }
@@ -659,11 +704,11 @@ export const useAdminStore = create((set, get) => ({
     createRole: async (name, description, permissionCodes) => {
         set({ isLoading: true, error: null });
         try {
-            const newRole = await rolesAPI.createRole({ name, description, permissions: permissionCodes });
+            const newRole = await rolesAPI.createRole({ name, description, permission_codes: permissionCodes });
             set((state) => ({ roles: [...state.roles, newRole], isLoading: false }));
             return newRole;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -672,14 +717,14 @@ export const useAdminStore = create((set, get) => ({
     updateRole: async (roleId, description, permissionCodes) => {
         set({ isLoading: true, error: null });
         try {
-            const updatedRole = await rolesAPI.updateRole(roleId, { description, permissions: permissionCodes });
+            const updatedRole = await rolesAPI.updateRole(roleId, { description, permission_codes: permissionCodes });
             set((state) => ({
                 roles: state.roles.map((r) => r.id === roleId ? updatedRole : r),
                 isLoading: false,
             }));
             return updatedRole;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }
@@ -694,7 +739,7 @@ export const useAdminStore = create((set, get) => ({
                 isLoading: false,
             }));
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
+            const errorMessage = extractError(error);
             set({ error: errorMessage, isLoading: false });
             throw error;
         }

@@ -33,12 +33,9 @@ export const AdminOrgSprintsPage = () => {
     });
 
     useEffect(() => {
-        if (!(roles.includes('super_admin') || user?.user_type === 'super_admin')) {
-            navigate('/dashboard');
-            return;
-        }
         fetchSprints(orgId, 1);
-    }, [orgId, roles, user?.user_type, navigate, fetchSprints]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orgId]);
 
     const handleCreate = async (e) => {
         e.preventDefault();

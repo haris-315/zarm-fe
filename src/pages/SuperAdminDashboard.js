@@ -24,13 +24,11 @@ export const SuperAdminDashboard = () => {
     } = useAdminStore();
 
     useEffect(() => {
-        if (!(roles.includes('super_admin') || user?.user_type === 'super_admin')) {
-            navigate('/dashboard');
-            return;
-        }
         fetchFacilitators();
         fetchOrganizations(1, 100);
-    }, [roles, user?.user_type, navigate, fetchFacilitators, fetchOrganizations]);
+        // ProtectedRoute already guards this route — no auth check needed here.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const pendingOrganizations = organizations.filter(org => org.status === 'pending');
 

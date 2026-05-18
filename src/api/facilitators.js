@@ -35,7 +35,7 @@ export const facilitatorAPI = {
     },
 
     setExtraPermissions: async (facilitatorId, permissions) => {
-        const response = await apiClient.post(`/admin/facilitators/${facilitatorId}/extra-permissions`, { permissions });
+        const response = await apiClient.post(`/admin/facilitators/${facilitatorId}/extra-permissions`, { extra_permissions: permissions });
         return response.data;
     },
 };

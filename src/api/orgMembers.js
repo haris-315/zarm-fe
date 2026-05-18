@@ -47,7 +47,7 @@ export const orgMembersAPI = {
     },
 
     setExtraPermissions: async (userId, permissions) => {
-        const response = await apiClient.post(`/organizations/members/${userId}/extra-permissions`, { permissions });
+        const response = await apiClient.post(`/organizations/members/${userId}/extra-permissions`, { extra_permissions: permissions });
         return response.data;
     },
 };

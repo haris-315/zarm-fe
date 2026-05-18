@@ -31,12 +31,9 @@ export const OrganizationsList = () => {
     const [rejectReason, setRejectReason] = useState('');
 
     useEffect(() => {
-        if (!(roles.includes('super_admin') || user?.user_type === 'super_admin')) {
-            navigate('/dashboard');
-            return;
-        }
         fetchOrganizations(orgCurrentPage, orgPageSize);
-    }, [orgCurrentPage, orgPageSize, roles, user?.user_type, navigate, fetchOrganizations]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orgCurrentPage]);
 
     const handleToggleStatus = async (orgId, currentStatus) => {
         try {

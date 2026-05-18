@@ -20,7 +20,7 @@ export const DashboardPage = () => {
 
     useEffect(() => {
         // super_admin → admin panel
-        if (roles.includes('super_admin') || user?.user_type === 'super_admin') {
+        if (roles.includes('super_admin') || user?.user_type === 'super_admin' || user?.role?.name === 'super_admin') {
             navigate('/admin', { replace: true });
             return;
         }

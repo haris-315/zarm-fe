@@ -1,6 +1,50 @@
 import { create } from 'zustand';
 import { authAPI, userAPI } from '../api';
 
+/**
+ * Normalize any /me (or login) response into the three fields the store tracks.
+ *
+ * Backend shapes we handle:
+ *   role:       { id, name, description, is_system }  ← new single-object shape
+ *   roles:      ['super_admin']                        ← legacy string array
+ *   roles:      [{ name: 'super_admin' }]              ← array-of-objects variant
+ *
+ *   all_permissions: [{ code, description }]           ← new merged list
+ *   permissions:     ['sprint.read']                   ← legacy string array
+ *   extra_permissions: ['sprint.delete']               ← extra codes on top of role
+ */
+const normalizeUserData = (userData) => {
+    // ── roles ──────────────────────────────────────────────────────────
+    let roles = [];
+    if (Array.isArray(userData.roles)) {
+        roles = userData.roles.map((r) => (typeof r === 'string' ? r : r?.name)).filter(Boolean);
+    } else if (userData.role?.name) {
+        roles = [userData.role.name];
+    }
+
+    // ── permissions (flat code strings) ────────────────────────────────
+    let permissions = [];
+    if (Array.isArray(userData.all_permissions)) {
+        permissions = userData.all_permissions
+            .map((p) => (typeof p === 'string' ? p : p?.code))
+            .filter(Boolean);
+    } else if (Array.isArray(userData.permissions)) {
+        permissions = userData.permissions.map((p) => (typeof p === 'string' ? p : p?.code)).filter(Boolean);
+    }
+
+    // ── organization ───────────────────────────────────────────────────
+    const organization = userData.organization || null;
+
+    return { roles, permissions, organization };
+};
+
+const extractApiError = (error) => {
+    const detail = error.response?.data?.detail;
+    if (Array.isArray(detail)) return detail.map((e) => e.msg || JSON.stringify(e)).join(', ');
+    if (typeof detail === 'string') return detail;
+    return error.message || 'An unexpected error occurred';
+};
+
 export const useAuthStore = create((set, get) => ({
     // State
     user: null,
@@ -14,7 +58,7 @@ export const useAuthStore = create((set, get) => ({
     error: null,
     isAuthenticated: !!localStorage.getItem('access_token'),
 
-    // Initialize auth on app load/refresh
+    // Initialize auth on app load / hard refresh
     initializeAuth: async () => {
         set({ isLoading: true });
         const token = localStorage.getItem('access_token');
@@ -26,14 +70,12 @@ export const useAuthStore = create((set, get) => ({
 
         try {
             const userData = await userAPI.getMe();
-            
-            // Consolidate organization info
-            const organization = userData.organization || null;
+            const { roles, permissions, organization } = normalizeUserData(userData);
 
             set({
                 user: userData,
-                roles: userData.roles || [],
-                permissions: userData.permissions || [],
+                roles,
+                permissions,
                 organization,
                 accessToken: token,
                 isAuthenticated: true,
@@ -41,7 +83,6 @@ export const useAuthStore = create((set, get) => ({
                 isInitialized: true,
             });
         } catch (error) {
-            // Token invalid or expired
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
             set({
@@ -59,36 +100,32 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
-    // Actions
     signup: async (signupData) => {
         set({ isLoading: true, error: null });
         try {
             const response = await authAPI.signup(signupData);
-            const { access_token, refresh_token, organization } = response;
+            const { access_token, refresh_token } = response;
 
             localStorage.setItem('access_token', access_token);
             localStorage.setItem('refresh_token', refresh_token);
 
-            // Fetch complete user data with roles and permissions
             const userData = await userAPI.getMe();
-            
-            const organizationInfo = userData.organization || null;
+            const { roles, permissions, organization } = normalizeUserData(userData);
 
             set({
                 accessToken: access_token,
                 refreshToken: refresh_token,
                 user: userData,
-                roles: userData.roles || [],
-                permissions: userData.permissions || [],
-                organization: organizationInfo,
+                roles,
+                permissions,
+                organization,
                 isAuthenticated: true,
                 isLoading: false,
             });
 
             return { ...response, user: userData };
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
-            set({ error: errorMessage, isLoading: false });
+            set({ error: extractApiError(error), isLoading: false });
             throw error;
         }
     },
@@ -102,17 +139,15 @@ export const useAuthStore = create((set, get) => ({
             localStorage.setItem('access_token', access_token);
             localStorage.setItem('refresh_token', refresh_token);
 
-            // Fetch user data with roles and permissions
             const userData = await userAPI.getMe();
-
-            const organization = userData.organization || null;
+            const { roles, permissions, organization } = normalizeUserData(userData);
 
             set({
                 accessToken: access_token,
                 refreshToken: refresh_token,
                 user: userData,
-                roles: userData.roles || [],
-                permissions: userData.permissions || [],
+                roles,
+                permissions,
                 organization,
                 isAuthenticated: true,
                 isLoading: false,
@@ -120,8 +155,7 @@ export const useAuthStore = create((set, get) => ({
 
             return response;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
-            set({ error: errorMessage, isLoading: false });
+            set({ error: extractApiError(error), isLoading: false });
             throw error;
         }
     },
@@ -135,17 +169,15 @@ export const useAuthStore = create((set, get) => ({
             localStorage.setItem('access_token', access_token);
             localStorage.setItem('refresh_token', refresh_token);
 
-            // Fetch user data with roles and permissions
             const userData = await userAPI.getMe();
-
-            const organization = userData.organization || null;
+            const { roles, permissions, organization } = normalizeUserData(userData);
 
             set({
                 accessToken: access_token,
                 refreshToken: refresh_token,
                 user: userData,
-                roles: userData.roles || [],
-                permissions: userData.permissions || [],
+                roles,
+                permissions,
                 organization,
                 isAuthenticated: true,
                 isLoading: false,
@@ -153,8 +185,7 @@ export const useAuthStore = create((set, get) => ({
 
             return response;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
-            set({ error: errorMessage, isLoading: false });
+            set({ error: extractApiError(error), isLoading: false });
             throw error;
         }
     },
@@ -162,10 +193,8 @@ export const useAuthStore = create((set, get) => ({
     refreshAuthTokens: async () => {
         const { refreshToken } = get();
         const currentRefreshToken = refreshToken || localStorage.getItem('refresh_token');
-        
-        if (!currentRefreshToken) {
-            throw new Error('No refresh token available');
-        }
+
+        if (!currentRefreshToken) throw new Error('No refresh token available');
 
         try {
             const response = await authAPI.refresh(currentRefreshToken);
@@ -174,23 +203,14 @@ export const useAuthStore = create((set, get) => ({
             localStorage.setItem('access_token', access_token);
             localStorage.setItem('refresh_token', newRefreshToken);
 
-            set({
-                accessToken: access_token,
-                refreshToken: newRefreshToken,
-                isAuthenticated: true,
-            });
-
+            set({ accessToken: access_token, refreshToken: newRefreshToken, isAuthenticated: true });
             return access_token;
         } catch (error) {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
             set({
-                user: null,
-                roles: [],
-                permissions: [],
-                organization: null,
-                accessToken: null,
-                refreshToken: null,
+                user: null, roles: [], permissions: [], organization: null,
+                accessToken: null, refreshToken: null,
                 isAuthenticated: false,
                 error: 'Session expired. Please login again.',
             });
@@ -208,15 +228,9 @@ export const useAuthStore = create((set, get) => ({
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
             set({
-                user: null,
-                roles: [],
-                permissions: [],
-                organization: null,
-                accessToken: null,
-                refreshToken: null,
-                isAuthenticated: false,
-                isLoading: false,
-                error: null,
+                user: null, roles: [], permissions: [], organization: null,
+                accessToken: null, refreshToken: null,
+                isAuthenticated: false, isLoading: false, error: null,
             });
         }
     },
@@ -224,12 +238,8 @@ export const useAuthStore = create((set, get) => ({
     getMe: async () => {
         try {
             const userData = await userAPI.getMe();
-            set({
-                user: userData,
-                roles: userData.roles || [],
-                permissions: userData.permissions || [],
-                organization: userData.organization || null,
-            });
+            const { roles, permissions, organization } = normalizeUserData(userData);
+            set({ user: userData, roles, permissions, organization });
             return userData;
         } catch (error) {
             console.error('Get user error:', error);
@@ -237,23 +247,9 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
-    // Check if user has a specific role
-    hasRole: (role) => {
-        const { roles } = get();
-        return Array.isArray(roles) && roles.includes(role);
-    },
-
-    // Check if user has a specific permission
-    hasPermission: (permission) => {
-        const { permissions } = get();
-        return Array.isArray(permissions) && permissions.includes(permission);
-    },
-
-    // Check if user has any of the given roles
-    hasAnyRole: (roleList) => {
-        const { roles } = get();
-        return Array.isArray(roles) && Array.isArray(roleList) && roleList.some(role => roles.includes(role));
-    },
+    hasRole: (role) => Array.isArray(get().roles) && get().roles.includes(role),
+    hasPermission: (perm) => Array.isArray(get().permissions) && get().permissions.includes(perm),
+    hasAnyRole: (list) => Array.isArray(get().roles) && list.some((r) => get().roles.includes(r)),
 
     setUser: (user) => set({ user }),
     setOrganization: (organization) => set({ organization }),
@@ -265,8 +261,7 @@ export const useAuthStore = create((set, get) => ({
             set({ user: updatedUser, isLoading: false });
             return updatedUser;
         } catch (error) {
-            const errorMessage = error.response?.data?.detail || error.message;
-            set({ error: errorMessage, isLoading: false });
+            set({ error: extractApiError(error), isLoading: false });
             throw error;
         }
     },

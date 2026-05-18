@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .sectionTitle {
@@ -18,11 +18,6 @@
   gap: 8px;
 }
 
-.sectionHint {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-}
-
 .countBadge {
   background: var(--bg-inset);
   color: var(--text-secondary);
@@ -32,9 +27,10 @@
   font-weight: 500;
 }
 
+/* ── Role Grid ── */
 .roleGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
 
@@ -46,40 +42,106 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: box-shadow var(--duration-base) var(--ease-standard);
+  transition: box-shadow var(--duration-base) var(--ease-standard),
+              border-color var(--duration-base) var(--ease-standard);
 }
 
 .roleCard:hover {
   box-shadow: var(--shadow-xs);
+  border-color: var(--border-strong);
 }
 
 .systemCard {
   background: var(--bg-subtle);
+  border-style: dashed;
 }
 
 .skeleton {
-  height: 160px;
+  height: 180px;
   animation: pulse 1.4s ease-in-out infinite;
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: 0.35; }
 }
 
+/* ── Card header ── */
 .cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cardTitleRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
   gap: 8px;
 }
 
 .roleName {
   font-size: var(--text-md);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
+  font-family: monospace;
 }
 
+.cardBadges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.systemBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.customBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--accent-subtle);
+  color: var(--accent-text);
+}
+
+.lockIcon,
+.shieldIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  cursor: help;
+}
+
+.lockIcon {
+  color: var(--warning);
+  background: var(--warning-subtle);
+}
+
+.shieldIcon {
+  color: var(--danger);
+  background: var(--danger-subtle);
+}
+
+/* ── Card body ── */
 .roleDesc {
   font-size: var(--text-sm);
   color: var(--text-secondary);
@@ -87,8 +149,16 @@
   margin: 0;
 }
 
-.permRow {
+.permSummary {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.permCount {
+  font-size: 11px;
+  color: var(--text-tertiary);
 }
 
 .noPerms {
@@ -97,13 +167,53 @@
   font-style: italic;
 }
 
+/* ── Card footer ── */
 .cardFooter {
   display: flex;
   gap: 4px;
-  padding-top: 8px;
+  padding-top: 12px;
   border-top: 1px solid var(--border-default);
+  align-items: center;
 }
 
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: none;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.iconBtn:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.iconBtnDanger:hover:not(:disabled) {
+  background: var(--danger-subtle);
+  color: var(--danger);
+  border-color: var(--danger-subtle);
+}
+
+.iconBtnGhost {
+  border-color: transparent;
+  margin-left: auto;
+}
+
+.iconBtnDisabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ── Errors & empty state ── */
 .error {
   background: var(--danger-subtle);
   color: var(--danger);
@@ -146,11 +256,23 @@
   max-width: 360px;
 }
 
-/* Modal Form */
+/* ── Modal form ── */
 .modalForm {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.protectedBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--danger-subtle);
+  color: var(--danger);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  border: 1px solid var(--danger-subtle);
 }
 
 .templateBanner {
@@ -159,9 +281,9 @@
   padding: 10px 14px;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
-  border: 1px solid var(--accent-subtle);
 }
 
+/* ── Permission picker ── */
 .permPickerWrapper {
   display: flex;
   flex-direction: column;
@@ -198,6 +320,10 @@
   cursor: pointer;
 }
 
+.selectedChip:disabled {
+  cursor: default;
+}
+
 .removeX {
   font-size: 13px;
   color: var(--text-tertiary);
@@ -221,25 +347,52 @@
   box-shadow: 0 0 0 2px var(--accent-subtle);
 }
 
+.permSearch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .permGrid {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  max-height: 200px;
+  gap: 0;
+  max-height: 260px;
   overflow-y: auto;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  padding: 4px;
+}
+
+/* Grouped permission categories */
+.permCategory {
+  display: flex;
+  flex-direction: column;
+}
+
+.permCategoryLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 12px 4px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-default);
+  position: sticky;
+  top: 0;
 }
 
 .permItem {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
+  padding: 8px 12px;
   cursor: pointer;
   transition: background var(--duration-fast) var(--ease-standard);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.permItem:last-child {
+  border-bottom: none;
 }
 
 .permItem:hover {
@@ -250,6 +403,22 @@
   background: var(--accent-subtle);
 }
 
+.permItemDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.permItemContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.permDesc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
 .checkbox {
   width: 14px;
   height: 14px;
@@ -258,6 +427,7 @@
   flex-shrink: 0;
 }
 
+/* ── Modal footer ── */
 .modalFooter {
   display: flex;
   justify-content: flex-end;

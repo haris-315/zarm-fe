@@ -10,6 +10,7 @@ import { DataTable } from '../components/DataTable';
 import { Modal } from '../components/Modal';
 import { ExtraPermissionsModal } from '../components/ExtraPermissionsModal';
 import { Toast } from '../components/Toast';
+import { PermissionBadgeGroup } from '../components/PermissionBadge';
 import styles from './FacilitatorsList.module.css';
 
 const GearIcon = () => (
@@ -47,14 +48,11 @@ export const FacilitatorsList = () => {
     const [toast, setToast] = useState(null);
 
     useEffect(() => {
-        if (!(userRoles.includes('super_admin') || user?.user_type === 'super_admin')) {
-            navigate('/dashboard');
-            return;
-        }
         fetchFacilitators(currentPage, pageSize);
         fetchRoles();
         fetchAvailableRolePermissions();
-    }, [currentPage, pageSize, userRoles, user?.user_type, navigate, fetchFacilitators, fetchRoles, fetchAvailableRolePermissions]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage]);
 
     const handleDisable = async (facilitatorId) => {
         try {
@@ -87,13 +85,16 @@ export const FacilitatorsList = () => {
             c.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const getAssignedRoleName = (facilitator) => {
-        if (facilitator.role_name) return facilitator.role_name;
-        if (facilitator.role) {
-            const found = platformRoles.find((r) => r.id === facilitator.role || r.name === facilitator.role);
-            return found?.name || facilitator.role;
-        }
-        return null;
+    // `role` is now an object {id, name, ...} from the API
+    const getAssignedRoleName = (facilitator) =>
+        facilitator.role?.name || facilitator.role_name || null;
+
+    // Derive role-sourced permissions: all_permissions minus extra_permissions
+    const getRolePermCodes = (facilitator) => {
+        const extraCodes = facilitator.extra_permissions || [];
+        return (facilitator.all_permissions || [])
+            .map((p) => (typeof p === 'string' ? p : p.code || ''))
+            .filter((code) => code && !extraCodes.includes(code));
     };
 
     const columns = [
@@ -157,6 +158,18 @@ export const FacilitatorsList = () => {
                             )}
                         </div>
                     </div>
+                );
+            },
+        },
+        {
+            key: 'permissions',
+            label: 'Permissions',
+            render: (_, row) => {
+                const allPerms = (row.all_permissions || []).map((p) => typeof p === 'string' ? p : p.code || '').filter(Boolean);
+                return allPerms.length > 0 ? (
+                    <PermissionBadgeGroup codes={allPerms} max={3} />
+                ) : (
+                    <span className={styles.muted}>No permissions</span>
                 );
             },
         },
@@ -269,7 +282,7 @@ export const FacilitatorsList = () => {
                 isOpen={!!permTarget}
                 onClose={() => setPermTarget(null)}
                 targetName={permTarget?.full_name || permTarget?.email || ''}
-                rolePermissions={permTarget?.role_permissions || []}
+                rolePermissions={permTarget ? getRolePermCodes(permTarget) : []}
                 extraPermissions={permTarget?.extra_permissions || []}
                 availablePermissions={availableRolePermissions}
                 onSave={handleSaveExtraPerms}

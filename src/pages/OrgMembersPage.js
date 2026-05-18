@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../context/adminStore';
 import { useAuthStore } from '../context/authStore';
 import { AppShell } from '../components/AppShell';
@@ -18,21 +17,8 @@ const GearIcon = () => (
     </svg>
 );
 
-const CheckIcon = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="20 6 9 17 4 12" />
-    </svg>
-);
-
-const WarnIcon = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-);
-
 export const OrgMembersPage = () => {
-    const navigate = useNavigate();
-    const { user, roles: userRoles, organization } = useAuthStore();
+    const { user, organization } = useAuthStore();
     const {
         orgMembers,
         totalOrgMembers,
@@ -47,7 +33,6 @@ export const OrgMembersPage = () => {
         fetchAvailablePermissions,
         fetchRoles,
         fetchAvailableRolePermissions,
-        updateOrgMember,
         removeOrgMember,
         inviteOrgMember,
         assignOrgMemberRole,
@@ -60,32 +45,19 @@ export const OrgMembersPage = () => {
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [inviteModalOpen, setInviteModalOpen] = useState(false);
-    const [editModalOpen, setEditModalOpen] = useState(false);
     const [roleDropdown, setRoleDropdown] = useState(null);
     const [permTarget, setPermTarget] = useState(null);
     const [toast, setToast] = useState(null);
 
-    const [inviteFormData, setInviteFormData] = useState({
-        email: '',
-        role: 'member',
-        extra_permissions: [],
-    });
-    const [editFormData, setEditFormData] = useState({
-        id: '',
-        role: 'member',
-        extra_permissions: [],
-    });
+    const [inviteFormData, setInviteFormData] = useState({ email: '', role: 'member' });
 
     useEffect(() => {
-        if (!(userRoles.includes('org_admin') || userRoles.includes('manager'))) {
-            navigate('/dashboard');
-            return;
-        }
         fetchOrgMembers(orgMembersCurrentPage, orgMembersPageSize);
         fetchAvailablePermissions();
         fetchRoles();
         fetchAvailableRolePermissions();
-    }, [orgMembersCurrentPage, orgMembersPageSize, userRoles, navigate, fetchOrgMembers, fetchAvailablePermissions, fetchRoles, fetchAvailableRolePermissions]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orgMembersCurrentPage]);
 
     const handleRemoveMember = async (memberId) => {
         setSubmitting(true);
@@ -100,30 +72,13 @@ export const OrgMembersPage = () => {
         }
     };
 
-    const handleUpdateMember = async (e) => {
-        if (e) e.preventDefault();
-        setSubmitting(true);
-        try {
-            await updateOrgMember(editFormData.id, {
-                role: editFormData.role,
-                extra_permissions: editFormData.extra_permissions,
-            });
-            setEditModalOpen(false);
-            setToast({ type: 'success', message: 'Member updated' });
-        } catch {
-            setToast({ type: 'error', message: 'Failed to update member' });
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
     const handleInviteMember = async (e) => {
         e.preventDefault();
         setSubmitting(true);
         try {
             await inviteOrgMember(inviteFormData);
             setInviteModalOpen(false);
-            setInviteFormData({ email: '', role: 'member', extra_permissions: [] });
+            setInviteFormData({ email: '', role: 'member' });
             setToast({ type: 'success', message: 'Invitation sent' });
         } catch {
             setToast({ type: 'error', message: 'Failed to send invite' });
@@ -147,10 +102,15 @@ export const OrgMembersPage = () => {
         await setOrgMemberExtraPermissions(permTarget.id, newPerms);
     };
 
-    const getAssignedRoleName = (member) => {
-        if (member.role_name) return member.role_name;
-        if (member.assigned_role) return member.assigned_role;
-        return null;
+    const getAssignedRoleName = (member) =>
+        member.role?.name || member.roles?.[0] || null;
+
+    // Derive role-sourced permissions: all_permissions minus extra_permissions
+    const getRolePermCodes = (member) => {
+        const extraCodes = member.extra_permissions || [];
+        return (member.all_permissions || [])
+            .map((p) => (typeof p === 'string' ? p : p.code || ''))
+            .filter((code) => code && !extraCodes.includes(code));
     };
 
     const filteredMembers = orgMembers.filter(
@@ -188,24 +148,6 @@ export const OrgMembersPage = () => {
         {
             key: 'role',
             label: 'Role',
-            render: (val, row) => {
-                const assignedRole = getAssignedRoleName(row);
-                const hasRole = !!assignedRole;
-                return (
-                    <div className={styles.roleIndicator}>
-                        <span className={`${styles.roleIcon} ${hasRole ? styles.roleIconOk : styles.roleIconWarn}`}>
-                            {hasRole ? <CheckIcon /> : <WarnIcon />}
-                        </span>
-                        <Badge status={val ? 'planning' : undefined} className={styles.roleBadge}>
-                            {val || 'member'}
-                        </Badge>
-                    </div>
-                );
-            },
-        },
-        {
-            key: 'assigned_role',
-            label: 'Assigned Role',
             render: (_, row) => {
                 const roleName = getAssignedRoleName(row);
                 const isOpen = roleDropdown === row.id;
@@ -256,18 +198,7 @@ export const OrgMembersPage = () => {
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setEditFormData({ id: row.id, role: row.role || 'member', extra_permissions: row.extra_permissions || [] });
-                            setEditModalOpen(true);
-                        }}
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Extra permissions"
+                        title="Manage extra permissions"
                         onClick={(e) => { e.stopPropagation(); setPermTarget(row); }}
                     >
                         <GearIcon />
@@ -386,26 +317,6 @@ export const OrgMembersPage = () => {
                 </form>
             </Modal>
 
-            {/* Edit Member Modal */}
-            <Modal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Member">
-                <form onSubmit={handleUpdateMember} className={styles.modalForm}>
-                    <Select
-                        label="Role"
-                        value={editFormData.role}
-                        onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
-                        options={[
-                            { label: 'Member', value: 'member' },
-                            { label: 'Manager', value: 'manager' },
-                            { label: 'Organization Admin', value: 'org_admin' },
-                        ]}
-                    />
-                    <div className={styles.modalFooter}>
-                        <Button variant="secondary" type="button" onClick={() => setEditModalOpen(false)}>Cancel</Button>
-                        <Button type="submit" loading={submitting}>Save Changes</Button>
-                    </div>
-                </form>
-            </Modal>
-
             {/* Remove Member Confirmation */}
             <Modal isOpen={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Remove Member?">
                 <p className={styles.confirmText}>
@@ -424,7 +335,7 @@ export const OrgMembersPage = () => {
                 isOpen={!!permTarget}
                 onClose={() => setPermTarget(null)}
                 targetName={permTarget?.full_name || permTarget?.email || ''}
-                rolePermissions={permTarget?.role_permissions || []}
+                rolePermissions={permTarget ? getRolePermCodes(permTarget) : []}
                 extraPermissions={permTarget?.extra_permissions || []}
                 availablePermissions={combinedAvailablePerms}
                 onSave={handleSaveExtraPerms}

@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useAdminStore } from '../context/adminStore';
-import { useAuthStore } from '../context/authStore';
 import { AppShell } from '../components/AppShell';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
+import { useAdminStore } from '../context/adminStore';
+import { useAuthStore } from '../context/authStore';
 import styles from './OrganizationDetail.module.css';
 
 export const OrganizationDetail = () => {
@@ -35,13 +35,10 @@ export const OrganizationDetail = () => {
     const [rejectionReason, setRejectionReason] = useState('');
 
     useEffect(() => {
-        if (!(roles.includes('super_admin') || user?.user_type === 'super_admin')) {
-            navigate('/dashboard');
-            return;
-        }
         if (orgId) fetchOrganization(orgId);
         return () => clearSelectedOrganization();
-    }, [orgId, roles, user?.user_type, navigate, fetchOrganization, clearSelectedOrganization]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orgId]);
 
     useEffect(() => {
         if (selectedOrganization) {

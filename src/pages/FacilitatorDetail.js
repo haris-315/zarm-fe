@@ -15,19 +15,10 @@ export const FacilitatorDetail = () => {
         useAdminStore();
 
     useEffect(() => {
-        if (!(roles.includes('super_admin') || user?.user_type === 'super_admin')) {
-            navigate('/dashboard');
-            return;
-        }
-
-        if (facilitatorId) {
-            fetchFacilitator(facilitatorId);
-        }
-
-        return () => {
-            clearSelectedFacilitator();
-        };
-    }, [facilitatorId, roles, user?.user_type, navigate, fetchFacilitator, clearSelectedFacilitator]);
+        if (facilitatorId) fetchFacilitator(facilitatorId);
+        return () => clearSelectedFacilitator();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [facilitatorId]);
 
     const breadcrumbs = (
         <div className={styles.breadcrumbs}>
