@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../api';
 import { useAuthStore } from '../context/authStore';
-import '../styles/Auth.css';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { Badge } from '../components/Badge';
+import styles from './LoginPage.module.css'; // Reusing base container/card styles
+import inviteStyles from './AcceptInvitePage.module.css';
 
 export const AcceptInvitePage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { acceptInvite, isAuthenticated, logout, error, clearError } = useAuthStore();
     const [loading, setLoading] = useState(false);
-
     const token = searchParams.get('token');
-
     const [inviteInfo, setInviteInfo] = useState(null);
     const [fetchingInfo, setFetchingInfo] = useState(true);
 
@@ -22,14 +24,8 @@ export const AcceptInvitePage = () => {
     });
 
     useEffect(() => {
-        if (isAuthenticated) {
-            logout();
-        }
-
-        if (!token) {
-            navigate('/login', { replace: true });
-            return;
-        }
+        if (isAuthenticated) logout();
+        if (!token) { navigate('/login', { replace: true }); return; }
 
         const fetchInfo = async () => {
             try {
@@ -47,7 +43,6 @@ export const AcceptInvitePage = () => {
                 setFetchingInfo(false);
             }
         };
-
         fetchInfo();
     }, [token, isAuthenticated, logout, navigate]);
 
@@ -88,96 +83,70 @@ export const AcceptInvitePage = () => {
     if (!token) return null;
 
     return (
-        <div className="auth-container">
-            <div className="auth-card">
-                <div className="auth-header">
-                    <h2>Complete Your Profile</h2>
-                    {fetchingInfo ? (
-                        <p>Loading invitation details...</p>
-                    ) : inviteInfo ? (
-                        <div className="invitee-welcome">
-                            {inviteInfo.avatar_url && (
-                                <div className="invitee-avatar">
-                                    <img src={inviteInfo.avatar_url} alt="Profile" />
-                                </div>
-                            )}
-                            <p>
-                                Hi <strong>{inviteInfo.email}</strong>, join <strong>{inviteInfo.organization_name || 'Zylo Platform'}</strong> as a <strong>{getUserTypeDisplay(inviteInfo.user_type)}</strong>!
-                            </p>
-                        </div>
-                    ) : (
-                        <p>Welcome! Please complete your profile to access your workspace.</p>
-                    )}
+        <div className={styles.container}>
+            <div className={styles.gridBackground} />
+            <div className={styles.card}>
+                <div className={styles.header}>
+                    <div className={styles.brand}>Zylo</div>
+                    <div className={styles.separator} />
+                    <h1 className={styles.title}>Join Workspace</h1>
                 </div>
 
-                {error && <div className="error-message">{error}</div>}
-
-                <form className="auth-form" onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="full_name">Full Name *</label>
-                        <input
-                            type="text"
-                            id="full_name"
-                            name="full_name"
-                            value={formData.full_name}
-                            onChange={handleChange}
-                            required
-                            placeholder="John Doe"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="password">Password *</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                            placeholder="Min 8 characters"
-                            minLength={8}
-                        />
-                    </div>
-
-                    {(!inviteInfo || inviteInfo.title === null) && (
-                        <div className="form-group">
-                            <label htmlFor="title">Job Title</label>
-                            <input
-                                type="text"
-                                id="title"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                placeholder="Manager, Developer, etc."
-                                disabled={loading}
-                            />
+                {fetchingInfo ? (
+                    <div className={inviteStyles.loading}>Loading invitation details...</div>
+                ) : inviteInfo ? (
+                    <div className={inviteStyles.inviteBox}>
+                        <div className={inviteStyles.inviteAvatar}>
+                            {inviteInfo.avatar_url ? <img src={inviteInfo.avatar_url} alt="" /> : inviteInfo.email.charAt(0).toUpperCase()}
                         </div>
+                        <p className={inviteStyles.welcomeText}>
+                            Hi <strong>{inviteInfo.email}</strong>, join <strong>{inviteInfo.organization_name || 'Zylo'}</strong> as a <strong>{getUserTypeDisplay(inviteInfo.user_type)}</strong>.
+                        </p>
+                    </div>
+                ) : (
+                    <p className={inviteStyles.fallbackText}>Please complete your profile to access your workspace.</p>
+                )}
+
+                {error && (
+                    <div className={styles.errorWrapper}>
+                        <Badge status="suspended">{error}</Badge>
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className={styles.form}>
+                    <Input
+                        label="Full Name"
+                        name="full_name"
+                        value={formData.full_name}
+                        onChange={handleChange}
+                        required
+                        placeholder="John Doe"
+                    />
+                    <Input
+                        label="Password"
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        placeholder="••••••••"
+                        minLength={8}
+                    />
+                    <Input
+                        label="Job Title"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleChange}
+                        placeholder="e.g. Senior Manager"
+                        disabled={inviteInfo?.title !== null && inviteInfo?.title !== undefined}
+                    />
+                    {inviteInfo?.title !== null && inviteInfo?.title !== undefined && (
+                        <p className={inviteStyles.hint}>Your title has been set by your administrator.</p>
                     )}
 
-                    {inviteInfo && inviteInfo.title !== null && (
-                        <div className="form-group">
-                            <label htmlFor="title">Job Title</label>
-                            <input
-                                type="text"
-                                id="title"
-                                name="title"
-                                value={inviteInfo.title}
-                                readOnly
-                                className="readonly-input"
-                                style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
-                            />
-                            <small>Your title has been set by your administrator.</small>
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        className="btn-primary auth-submit"
-                        disabled={loading}
-                    >
-                        {loading ? 'Completing Setup...' : 'Complete Setup'}
-                    </button>
+                    <Button type="submit" loading={loading} className={styles.submitButton}>
+                        Complete Setup
+                    </Button>
                 </form>
             </div>
         </div>

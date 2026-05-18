@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../context/authStore';
-import '../styles/Auth.css';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { Badge } from '../components/Badge';
+import styles from './LoginPage.module.css';
 
 export const LoginPage = () => {
     const navigate = useNavigate();
-    const { login, isLoading, error } = useAuthStore();
+    const { login, isLoading } = useAuthStore();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -33,26 +36,21 @@ export const LoginPage = () => {
             await login(formData.email, formData.password);
             const state = useAuthStore.getState();
             
-            // Super admins can always log in
             if (state.roles.includes('super_admin') || state.user?.user_type === 'super_admin') {
                 navigate('/admin');
                 return;
             }
 
-            // Check organization status for other users
-            // If they don't have an organization_id, they might be an independent user or super_admin (handled above)
             if (state.user?.organization_id) {
                 const orgStatus = state.organization?.status;
-                
                 if (orgStatus === 'pending') {
-                    setLocalError('Your organization registration is pending approval. Please check back later.');
+                    setLocalError('Your organization registration is pending approval.');
                     return;
                 } else if (orgStatus === 'rejected') {
-                    const reason = state.organization?.rejection_reason;
-                    setLocalError(`Your organization registration was rejected. ${reason ? `Reason: ${reason}` : ''}`);
+                    setLocalError('Your organization registration was rejected.');
                     return;
                 } else if (orgStatus === 'suspended') {
-                    setLocalError('Your organization account has been suspended. Please contact support.');
+                    setLocalError('Your organization account has been suspended.');
                     return;
                 }
             }
@@ -64,50 +62,53 @@ export const LoginPage = () => {
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-card">
-                <h1>Zylo AI Platform</h1>
-                <h2>Sign In</h2>
+        <div className={styles.container}>
+            <div className={styles.gridBackground} />
+            <div className={styles.card}>
+                <div className={styles.header}>
+                    <div className={styles.brand}>Zylo</div>
+                    <div className={styles.separator} />
+                    <h1 className={styles.title}>Sign in</h1>
+                </div>
 
-                {error && <div className="error-message">{error}</div>}
-                {localError && <div className="error-message">{localError}</div>}
-
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="email">Email Address</label>
-                        <input
-                            id="email"
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="Enter your email"
-                            required
-                            disabled={isLoading}
-                        />
+                {localError && (
+                    <div className={styles.errorWrapper}>
+                        <Badge status="suspended">{localError}</Badge>
                     </div>
+                )}
 
-                    <div className="form-group">
-                        <label htmlFor="password">Password</label>
-                        <input
-                            id="password"
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Enter your password"
-                            required
-                            disabled={isLoading}
-                        />
-                    </div>
-
-                    <button type="submit" className="btn-primary" disabled={isLoading}>
-                        {isLoading ? 'Signing in...' : 'Sign In'}
-                    </button>
+                <form onSubmit={handleSubmit} className={styles.form}>
+                    <Input
+                        label="Email Address"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="name@company.com"
+                        required
+                        disabled={isLoading}
+                    />
+                    <Input
+                        label="Password"
+                        name="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                    />
+                    <Button 
+                        type="submit" 
+                        loading={isLoading}
+                        className={styles.submitButton}
+                    >
+                        Sign in
+                    </Button>
                 </form>
 
-                <p className="auth-footer">
-                    Don't have an account? <Link to="/signup">Sign up here</Link>
+                <p className={styles.footer}>
+                    Don't have an account? <Link to="/signup" className={styles.link}>Sign up</Link>
                 </p>
             </div>
         </div>

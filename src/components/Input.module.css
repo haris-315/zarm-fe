@@ -1,0 +1,69 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.input {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  font-size: var(--text-sm);
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  width: 100%;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--border-focus);
+  box-shadow: inset 0 0 0 1px var(--border-focus);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+textarea.input {
+  height: auto;
+  min-height: 100px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.hasError {
+  border-color: var(--danger) !important;
+}
+
+.errorText {
+  font-size: var(--text-xs);
+  color: var(--danger);
+}
+
+.selectWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 32px;
+}
+
+.chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-secondary);
+}

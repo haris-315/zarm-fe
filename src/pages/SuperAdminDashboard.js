@@ -1,12 +1,17 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../context/adminStore';
 import { useAuthStore } from '../context/authStore';
-import '../styles/SuperAdmin.css';
+import { AppShell } from '../components/AppShell';
+import { Badge } from '../components/Badge';
+import { Button } from '../components/Button';
+import { StatCard } from '../components/StatCard';
+import { DataTable } from '../components/DataTable';
+import styles from './SuperAdminDashboard.module.css';
 
 export const SuperAdminDashboard = () => {
     const navigate = useNavigate();
-    const { user, logout, roles } = useAuthStore();
+    const { user, roles } = useAuthStore();
     const { 
         facilitators, 
         totalFacilitators, 
@@ -23,205 +28,95 @@ export const SuperAdminDashboard = () => {
             navigate('/dashboard');
             return;
         }
-        console.log('Fetching dashboard data');
         fetchFacilitators();
-        fetchOrganizations(1, 100); // Fetch a larger batch to count pending
-    }, []);
-
-    const handleLogout = async () => {
-        await logout();
-        navigate('/login');
-    };
+        fetchOrganizations(1, 100);
+    }, [roles, user?.user_type, navigate, fetchFacilitators, fetchOrganizations]);
 
     const pendingOrganizations = organizations.filter(org => org.status === 'pending');
 
+    const facilitatorColumns = [
+        { key: 'email', label: 'Email' },
+        { key: 'full_name', label: 'Name', render: (val) => val || 'N/A' },
+        { 
+            key: 'status', 
+            label: 'Status', 
+            render: (val) => <Badge status={val}>{val}</Badge> 
+        },
+        { 
+            key: 'actions', 
+            label: 'Actions', 
+            render: (_, row) => (
+                <Link to={`/admin/facilitators/${row.id}`}>
+                    <Button variant="ghost" size="sm">View</Button>
+                </Link>
+            )
+        },
+    ];
+
     return (
-        <div className="super-admin-container">
-            <header className="admin-header">
-                <div className="header-content">
-                    <div className="logo-section">
-                        <h1>Zylo Admin</h1>
-                        <span className="user-type">Super Administrator</span>
+        <AppShell 
+            title="Admin Console"
+            actions={
+                <Button onClick={() => navigate('/admin/facilitators/new')}>
+                    + New Facilitator
+                </Button>
+            }
+        >
+            {error && <div className={styles.error}>{error}</div>}
+
+            <div className={styles.statsRow}>
+                <StatCard label="Total Facilitators" value={totalFacilitators} />
+                <StatCard label="Organizations" value={totalOrganizations} />
+                <StatCard 
+                    label="Pending Approvals" 
+                    value={pendingOrganizations.length} 
+                    trend={pendingOrganizations.length > 0 ? 'up' : null}
+                    trendValue={pendingOrganizations.length > 0 ? 'Requires Action' : null}
+                />
+                <StatCard label="Recent Signups" value={organizations.length} />
+            </div>
+
+            {pendingOrganizations.length > 0 && (
+                <div className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <h3 className={styles.sectionTitle}>
+                            Action Required <span className={styles.pulseDot} />
+                        </h3>
                     </div>
-                    <div className="header-actions">
-                        <span className="user-info">{user?.email}</span>
-                        <button onClick={handleLogout} className="btn-logout">
-                            Logout
-                        </button>
+                    <div className={styles.pendingList}>
+                        {pendingOrganizations.map((org) => (
+                            <div key={org.id} className={styles.pendingCard}>
+                                <div className={styles.pendingInfo}>
+                                    <div className={styles.orgName}>{org.name}</div>
+                                    <div className={styles.orgMeta}>
+                                        {org.industry || 'General'} • {org.primary_contact_email}
+                                    </div>
+                                </div>
+                                <Button 
+                                    size="sm" 
+                                    onClick={() => navigate(`/admin/organizations/${org.id}`)}
+                                >
+                                    Review
+                                </Button>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </header>
+            )}
 
-            <main className="admin-main">
-                <aside className="admin-sidebar">
-                    <nav className="sidebar-nav">
-                        <Link to="/admin" className="nav-link active">
-                            Dashboard
-                        </Link>
-                        <Link to="/admin/facilitators" className="nav-link">
-                            Facilitators
-                        </Link>
-                        <Link to="/admin/organizations" className="nav-link">
-                            Organizations
-                        </Link>
-                        <Link to="/admin/notifications" className="nav-link" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            Notifications
-                            {pendingOrganizations.length > 0 && (
-                                <span style={{ 
-                                    backgroundColor: '#ff4d4f', 
-                                    color: 'white', 
-                                    borderRadius: '10px', 
-                                    padding: '2px 8px', 
-                                    fontSize: '10px',
-                                    fontWeight: 'bold'
-                                }}>
-                                    {pendingOrganizations.length}
-                                </span>
-                            )}
-                        </Link>
-                        <Link to="/admin/settings" className="nav-link">
-                            Settings
-                        </Link>
-                    </nav>
-                </aside>
-
-                <section className="admin-content">
-                    <div className="welcome-card">
-                        <h2>Super Admin Dashboard</h2>
-                        <p>Manage the platform and all facilitators</p>
-                    </div>
-
-                    {error && <div className="error-message">{error}</div>}
-
-                    <div className="admin-grid">
-                        <div className="stat-card">
-                            <h3>Total Facilitators</h3>
-                            <p className="stat-value">{totalFacilitators}</p>
-                            <p className="stat-label">Active Facilitators</p>
-                        </div>
-
-                        <div className="stat-card">
-                            <h3>Organizations</h3>
-                            <p className="stat-value">{totalOrganizations}</p>
-                            <p className="stat-label">Total Organizations</p>
-                        </div>
-
-                        <div className="stat-card" style={{ borderLeftColor: pendingOrganizations.length > 0 ? '#faad14' : '#2c3e50' }}>
-                            <h3>Pending Approvals</h3>
-                            <p className="stat-value" style={{ color: pendingOrganizations.length > 0 ? '#faad14' : '#2c3e50' }}>
-                                {pendingOrganizations.length}
-                            </p>
-                            <p className="stat-label">Organizations Awaiting Review</p>
-                        </div>
-
-                        <div className="stat-card">
-                            <h3>Recent Signups</h3>
-                            <p className="stat-value">{organizations.length}</p>
-                            <p className="stat-label">Last 30 Days</p>
-                        </div>
-                    </div>
-
-                    {pendingOrganizations.length > 0 && (
-                        <section className="notifications-section" style={{ marginBottom: '30px' }}>
-                            <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                🔔 Action Required: Pending Approvals
-                            </h3>
-                            <div className="table-responsive">
-                                <table className="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Organization Name</th>
-                                            <th>Industry</th>
-                                            <th>Primary Contact</th>
-                                            <th>Email</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pendingOrganizations.map((org) => (
-                                            <tr key={org.id} style={{ backgroundColor: '#fffbe6' }}>
-                                                <td><strong>{org.name}</strong></td>
-                                                <td>{org.industry || '—'}</td>
-                                                <td>{org.primary_contact_name || '—'}</td>
-                                                <td>{org.primary_contact_email}</td>
-                                                <td>
-                                                    <Link
-                                                        to={`/admin/organizations/${org.id}`}
-                                                        className="btn-primary"
-                                                        style={{ padding: '4px 12px', fontSize: '12px' }}
-                                                    >
-                                                        Review & Approve
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </section>
-                    )}
-
-                    <div className="quick-actions">
-                        <h3>Quick Actions</h3>
-                        <div className="action-buttons">
-                            <Link to="/admin/facilitators/new" className="btn-action">
-                                + Add New Facilitator
-                            </Link>
-                            <Link to="/admin/facilitators" className="btn-action secondary">
-                                View All Facilitators
-                            </Link>
-                            <Link to="/admin/organizations" className="btn-action secondary">
-                                Manage Organizations
-                            </Link>
-                        </div>
-                    </div>
-
-                    <section className="recent-facilitators">
-                        <h3>Recent Facilitators</h3>
-                        {isLoading ? (
-                            <div className="loading">Loading...</div>
-                        ) : facilitators.length > 0 ? (
-                            <div className="table-responsive">
-                                <table className="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Email</th>
-                                            <th>Name</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {facilitators.slice(0, 5).map((facilitator) => (
-                                            <tr key={facilitator.id}>
-                                                <td>{facilitator.email}</td>
-                                                <td>{facilitator.full_name || 'N/A'}</td>
-                                                <td>
-                                                    <span
-                                                        className={`status-badge status-${facilitator.status}`}
-                                                    >
-                                                        {facilitator.status}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <Link
-                                                        to={`/admin/facilitators/${facilitator.id}`}
-                                                        className="link-action"
-                                                    >
-                                                        View
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="no-data">No facilitators yet</div>
-                        )}
-                    </section>
-                </section>
-            </main>
-        </div>
+            <div className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h3 className={styles.sectionTitle}>Recent Facilitators</h3>
+                    <Link to="/admin/facilitators" className={styles.viewAll}>View all →</Link>
+                </div>
+                <div className={styles.tableCard}>
+                    <DataTable 
+                        columns={facilitatorColumns} 
+                        data={facilitators.slice(0, 5)} 
+                        loading={isLoading}
+                    />
+                </div>
+            </div>
+        </AppShell>
     );
 };

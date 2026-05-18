@@ -1,0 +1,64 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pill {
+  width: 80px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all var(--duration-base) var(--ease-standard);
+  background: var(--bg-inset);
+}
+
+.dayNum {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.dayLabel {
+  font-size: 8px;
+  font-weight: 500;
+  opacity: 0.8;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.done {
+  background: var(--text-primary);
+  color: var(--text-inverse);
+}
+
+.current {
+  background: var(--accent);
+  color: white;
+}
+
+.line {
+  width: 20px;
+  height: 1px;
+  background: var(--border-default);
+}
+
+.pulse {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-full);
+  animation: pulse 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.4; }
+  70% { transform: scale(1.1); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}

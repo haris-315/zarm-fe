@@ -1,12 +1,18 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../context/adminStore';
 import { useAuthStore } from '../context/authStore';
-import '../styles/FacilitatorsList.css';
+import { AppShell } from '../components/AppShell';
+import { Badge } from '../components/Badge';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { DataTable } from '../components/DataTable';
+import { Modal } from '../components/Modal';
+import styles from './OrganizationsList.module.css'; // Reusing similar styles
 
 export const FacilitatorsList = () => {
     const navigate = useNavigate();
-    const { user, logout, roles } = useAuthStore();
+    const { user, roles } = useAuthStore();
     const {
         facilitators,
         totalFacilitators,
@@ -29,12 +35,7 @@ export const FacilitatorsList = () => {
             return;
         }
         fetchFacilitators(currentPage, pageSize);
-    }, [roles, user?.user_type, navigate, fetchFacilitators, currentPage, pageSize]);
-
-    const handleLogout = async () => {
-        await logout();
-        navigate('/login');
-    };
+    }, [currentPage, pageSize, roles, user?.user_type, navigate, fetchFacilitators]);
 
     const handleDisable = async (facilitatorId) => {
         try {
@@ -45,204 +46,112 @@ export const FacilitatorsList = () => {
         }
     };
 
-    const handlePageChange = (newPage) => {
-        setPage(newPage);
-        fetchFacilitators(newPage, pageSize);
-    };
-
     const filteredFacilitators = facilitators.filter(
         (c) =>
             c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.title?.toLowerCase().includes(searchTerm.toLowerCase())
+            c.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const columns = [
+        { 
+            key: 'email', 
+            label: 'Facilitator',
+            render: (val, row) => (
+                <div className={styles.orgCell}>
+                    <div className={styles.logo}>
+                        {row.avatar_url ? <img src={row.avatar_url} alt="" /> : val.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <div style={{ fontWeight: 600 }}>{row.full_name || 'No Name'}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{val}</div>
+                    </div>
+                </div>
+            )
+        },
+        { key: 'title', label: 'Title', render: (val) => val || '—' },
+        { 
+            key: 'status', 
+            label: 'Status', 
+            render: (val) => <Badge status={val}>{val}</Badge> 
+        },
+        { 
+            key: 'actions', 
+            label: 'Actions',
+            render: (_, row) => (
+                <div className={styles.actions}>
+                    <Link to={`/admin/facilitators/${row.id}`}>
+                        <Button variant="ghost" size="sm">View</Button>
+                    </Link>
+                    <Link to={`/admin/facilitators/${row.id}/edit`}>
+                        <Button variant="ghost" size="sm">Edit</Button>
+                    </Link>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(row.id)}>Disable</Button>
+                </div>
+            )
+        }
+    ];
 
     const totalPages = Math.ceil(totalFacilitators / pageSize);
 
     return (
-        <div className="super-admin-container">
-            <header className="admin-header">
-                <div className="header-content">
-                    <div className="logo-section">
-                        <h1>Zylo Admin</h1>
-                        <span className="user-type">Super Administrator</span>
-                    </div>
-                    <div className="header-actions">
-                        <span className="user-info">{user?.email}</span>
-                        <button onClick={handleLogout} className="btn-logout">
-                            Logout
-                        </button>
-                    </div>
+        <AppShell 
+            title="Facilitators"
+            actions={
+                <div className={styles.topActions}>
+                    <Input 
+                        placeholder="Search facilitators..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className={styles.search}
+                    />
+                    <Button onClick={() => navigate('/admin/facilitators/new')}>+ New Facilitator</Button>
                 </div>
-            </header>
+            }
+        >
+            {error && <div className={styles.error}>{error} <button onClick={clearError}>×</button></div>}
 
-            <main className="admin-main">
-                <aside className="admin-sidebar">
-                    <nav className="sidebar-nav">
-                        <Link to="/admin" className="nav-link">
-                            Dashboard
-                        </Link>
-                        <Link to="/admin/facilitators" className="nav-link active">
-                            Facilitators
-                        </Link>
-                        <Link to="/admin/organizations" className="nav-link">
-                            Organizations
-                        </Link>
-                        <Link to="/admin/notifications" className="nav-link">
-                            Notifications
-                        </Link>
-                        <Link to="/admin/settings" className="nav-link">
-                            Settings
-                        </Link>
-                    </nav>
-                </aside>
+            <div className={styles.tableCard}>
+                <DataTable 
+                    columns={columns} 
+                    data={filteredFacilitators} 
+                    loading={isLoading}
+                    onRowClick={(row) => navigate(`/admin/facilitators/${row.id}`)}
+                />
+            </div>
 
-                <section className="admin-content">
-                    <div className="page-header">
-                        <h2>Manage Facilitators</h2>
-                        <Link to="/admin/facilitators/new" className="btn-primary">
-                            + Add New Facilitator
-                        </Link>
-                    </div>
-
-                    {error && (
-                        <div className="error-message">
-                            {error}
-                            <button onClick={clearError} className="btn-close">
-                                ×
-                            </button>
-                        </div>
-                    )}
-
-                    <div className="filters-section">
-                        <input
-                            type="text"
-                            placeholder="Search by email or name..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="search-input"
-                        />
-                        <div className="filter-info">
-                            Showing {filteredFacilitators.length} of {totalFacilitators}
-                        </div>
-                    </div>
-
-                    {isLoading ? (
-                        <div className="loading">Loading facilitators...</div>
-                    ) : filteredFacilitators.length > 0 ? (
-                        <>
-                            <div className="table-responsive">
-                                <table className="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Email</th>
-                                            <th>Full Name</th>
-                                            <th>Title</th>
-                                            <th>Status</th>
-                                            <th>User Type</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredFacilitators.map((facilitator) => (
-                                            <tr key={facilitator.id}>
-                                                <td>
-                                                    <strong>{facilitator.email}</strong>
-                                                </td>
-                                                <td>{facilitator.full_name || '—'}</td>
-                                                <td>{facilitator.title || '—'}</td>
-                                                <td>
-                                                    <span
-                                                        className={`status-badge status-${facilitator.status}`}
-                                                    >
-                                                        {facilitator.status}
-                                                    </span>
-                                                </td>
-                                                <td>{facilitator.user_type}</td>
-                                                <td>
-                                                    <div className="action-buttons">
-                                                        <Link
-                                                            to={`/admin/facilitators/${facilitator.id}`}
-                                                            className="btn-icon view"
-                                                            title="View"
-                                                        >
-                                                            👁️
-                                                        </Link>
-                                                        <Link
-                                                            to={`/admin/facilitators/${facilitator.id}/edit`}
-                                                            className="btn-icon edit"
-                                                            title="Edit"
-                                                        >
-                                                            ✎
-                                                        </Link>
-                                                        <button
-                                                            onClick={() => setDeleteConfirm(facilitator.id)}
-                                                            className="btn-icon delete"
-                                                            title="Disable"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div className="pagination">
-                                <button
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                    className="btn-pagination"
-                                >
-                                    ← Previous
-                                </button>
-                                <span className="page-info">
-                                    Page {currentPage} of {totalPages}
-                                </span>
-                                <button
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                    className="btn-pagination"
-                                >
-                                    Next →
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="no-data">
-                            <p>No facilitators found</p>
-                            <Link to="/admin/facilitators/new" className="btn-primary">
-                                Create your first facilitator
-                            </Link>
-                        </div>
-                    )}
-                </section>
-            </main>
-
-            {deleteConfirm && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>Disable Facilitator?</h3>
-                        <p>This action will disable the facilitator account.</p>
-                        <div className="modal-actions">
-                            <button
-                                onClick={() => setDeleteConfirm(null)}
-                                className="btn-secondary"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => handleDisable(deleteConfirm)}
-                                className="btn-danger"
-                            >
-                                Disable
-                            </button>
-                        </div>
-                    </div>
+            <div className={styles.pagination}>
+                <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    disabled={currentPage === 1}
+                    onClick={() => setPage(currentPage - 1)}
+                >
+                    Previous
+                </Button>
+                <div className={styles.pageInfo}>
+                    Page {currentPage} of {totalPages}
                 </div>
-            )}
-        </div>
+                <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    disabled={currentPage === totalPages}
+                    onClick={() => setPage(currentPage + 1)}
+                >
+                    Next
+                </Button>
+            </div>
+
+            <Modal
+                isOpen={!!deleteConfirm}
+                onClose={() => setDeleteConfirm(null)}
+                title="Disable Facilitator?"
+            >
+                <p>Are you sure you want to disable this facilitator account? They will no longer be able to log in.</p>
+                <div className={styles.modalFooter}>
+                    <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+                    <Button variant="danger" onClick={() => handleDisable(deleteConfirm)}>Disable Account</Button>
+                </div>
+            </Modal>
+        </AppShell>
     );
 };

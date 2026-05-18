@@ -1,0 +1,127 @@
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.breadcrumbs a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  color: var(--text-primary);
+}
+
+.error {
+  background: var(--danger-subtle);
+  color: var(--danger);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.countText {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.loading, .empty {
+  text-align: center;
+  color: var(--text-tertiary);
+  padding: 48px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-standard);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-xs);
+  transform: translateY(-1px);
+}
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTitle {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.engagement {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.dayPips {
+  display: flex;
+  gap: 6px;
+}
+
+.pip {
+  height: 4px;
+  flex: 1;
+  border-radius: var(--radius-full);
+  background: var(--bg-inset);
+}
+
+.pipDone {
+  background: var(--text-primary);
+}
+
+.pipCurrent {
+  background: var(--accent);
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.pagination {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.pageInfo {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}

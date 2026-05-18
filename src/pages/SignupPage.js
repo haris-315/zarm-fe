@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../context/authStore';
-import '../styles/Auth.css';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { Badge } from '../components/Badge';
+import styles from './LoginPage.module.css'; // Reusing base container/card styles
+import signupStyles from './SignupPage.module.css';
 
 export const SignupPage = () => {
     const navigate = useNavigate();
-    const { signup, isLoading, error } = useAuthStore();
+    const { signup, isLoading } = useAuthStore();
     const [formData, setFormData] = useState({
         organization_name: '',
         email: '',
@@ -21,6 +25,7 @@ export const SignupPage = () => {
         full_name: '',
     });
     const [localError, setLocalError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -34,31 +39,15 @@ export const SignupPage = () => {
         e.preventDefault();
         setLocalError('');
 
-        // Validation
-        if (!formData.organization_name || !formData.email || !formData.password) {
-            setLocalError('Organization name, email, and password are required');
-            return;
-        }
-
         if (formData.password !== formData.confirmPassword) {
             setLocalError('Passwords do not match');
             return;
         }
 
-        if (formData.password.length < 8) {
-            setLocalError('Password must be at least 8 characters');
-            return;
-        }
-
         try {
-            // Remove confirmPassword before sending
             const { confirmPassword, ...signupPayload } = formData;
-
-            // Remove empty optional fields
             Object.keys(signupPayload).forEach(key => {
-                if (!signupPayload[key]) {
-                    delete signupPayload[key];
-                }
+                if (!signupPayload[key]) delete signupPayload[key];
             });
 
             await signup(signupPayload);
@@ -67,24 +56,7 @@ export const SignupPage = () => {
             if (state.roles.includes('super_admin') || state.user?.user_type === 'super_admin') {
                 navigate('/admin');
             } else {
-                // For regular users, the organization is likely pending
-                setSuccessMessage('Registration successful! Your organization account is now pending approval. You will be able to log in once it has been approved.');
-                // Clear form
-                setFormData({
-                    organization_name: '',
-                    email: '',
-                    password: '',
-                    confirmPassword: '',
-                    company_industry: '',
-                    company_headcount: '',
-                    estimated_annual_revenue: '',
-                    headquarters_location: '',
-                    primary_contact_name: '',
-                    primary_contact_email: '',
-                    contact_phone: '',
-                    full_name: '',
-                });
-                // Logout to clear tokens since they can't use them yet
+                setSuccessMessage('Registration successful! Your organization account is now pending approval.');
                 const { logout } = useAuthStore.getState();
                 await logout();
             }
@@ -93,185 +65,143 @@ export const SignupPage = () => {
         }
     };
 
-    const [successMessage, setSuccessMessage] = useState('');
-
     if (successMessage) {
         return (
-            <div className="auth-container">
-                <div className="auth-card">
-                    <h1>Zylo AI Platform</h1>
-                    <div className="success-message" style={{ margin: '20px 0', padding: '15px' }}>
-                        {successMessage}
+            <div className={styles.container}>
+                <div className={styles.gridBackground} />
+                <div className={styles.card}>
+                    <div className={styles.header}>
+                        <div className={styles.brand}>Zylo</div>
+                        <div className={styles.separator} />
+                        <h1 className={styles.title}>Success</h1>
                     </div>
-                    <button onClick={() => navigate('/login')} className="btn-primary">
+                    <div className={signupStyles.successBox}>
+                        <Badge status="complete">Success</Badge>
+                        <p className={signupStyles.successText}>{successMessage}</p>
+                    </div>
+                    <Button className={styles.submitButton} onClick={() => navigate('/login')}>
                         Go to Login
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="auth-container">
-            <div className="auth-card signup-card">
-                <h1>Zylo AI Platform</h1>
-                <h2>Create Organization Account</h2>
+        <div className={styles.container}>
+            <div className={styles.gridBackground} />
+            <div className={`${styles.card} ${signupStyles.signupCard}`}>
+                <div className={styles.header}>
+                    <div className={styles.brand}>Zylo</div>
+                    <div className={styles.separator} />
+                    <h1 className={styles.title}>Create Account</h1>
+                </div>
 
-                {error && <div className="error-message">{error}</div>}
-                {localError && <div className="error-message">{localError}</div>}
+                {localError && (
+                    <div className={styles.errorWrapper}>
+                        <Badge status="suspended">{localError}</Badge>
+                    </div>
+                )}
 
-                <form onSubmit={handleSubmit}>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="organization_name">Organization Name *</label>
-                            <input
-                                id="organization_name"
-                                type="text"
+                <form onSubmit={handleSubmit} className={styles.form}>
+                    <div className={signupStyles.formSection}>
+                        <label className={signupStyles.sectionLabel}>Organization Details</label>
+                        <div className={signupStyles.grid}>
+                            <Input
+                                label="Organization Name *"
                                 name="organization_name"
                                 value={formData.organization_name}
                                 onChange={handleChange}
-                                placeholder="Enter organization name"
+                                placeholder="Acme Corp"
                                 required
                                 disabled={isLoading}
                             />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="email">Email Address *</label>
-                            <input
-                                id="email"
-                                type="email"
+                            <Input
+                                label="Email Address *"
                                 name="email"
+                                type="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                placeholder="Enter email"
+                                placeholder="admin@acme.com"
                                 required
                                 disabled={isLoading}
                             />
                         </div>
-                    </div>
-
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="password">Password *</label>
-                            <input
-                                id="password"
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Min 8 characters"
-                                required
-                                disabled={isLoading}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="confirmPassword">Confirm Password *</label>
-                            <input
-                                id="confirmPassword"
-                                type="password"
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                placeholder="Confirm password"
-                                required
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="company_industry">Industry</label>
-                            <input
-                                id="company_industry"
-                                type="text"
+                        <div className={signupStyles.grid}>
+                            <Input
+                                label="Industry"
                                 name="company_industry"
                                 value={formData.company_industry}
                                 onChange={handleChange}
-                                placeholder="e.g., Technology, Finance"
+                                placeholder="e.g. Technology"
                                 disabled={isLoading}
                             />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="company_headcount">Headcount</label>
-                            <input
-                                id="company_headcount"
-                                type="text"
+                            <Input
+                                label="Headcount"
                                 name="company_headcount"
                                 value={formData.company_headcount}
                                 onChange={handleChange}
-                                placeholder="e.g., 50-100"
+                                placeholder="e.g. 50-100"
                                 disabled={isLoading}
                             />
                         </div>
-                    </div>
-
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="estimated_annual_revenue">Annual Revenue</label>
-                            <input
-                                id="estimated_annual_revenue"
-                                type="text"
-                                name="estimated_annual_revenue"
-                                value={formData.estimated_annual_revenue}
-                                onChange={handleChange}
-                                placeholder="e.g., $1M - $5M"
-                                disabled={isLoading}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="headquarters_location">Headquarters Location</label>
-                            <input
-                                id="headquarters_location"
-                                type="text"
+                        <div className={signupStyles.grid}>
+                            <Input
+                                label="Location"
                                 name="headquarters_location"
                                 value={formData.headquarters_location}
                                 onChange={handleChange}
                                 placeholder="City, Country"
                                 disabled={isLoading}
                             />
-                        </div>
-                    </div>
-
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="primary_contact_name">Contact Name</label>
-                            <input
-                                id="primary_contact_name"
-                                type="text"
-                                name="primary_contact_name"
-                                value={formData.primary_contact_name}
+                            <Input
+                                label="Full Name"
+                                name="full_name"
+                                value={formData.full_name}
                                 onChange={handleChange}
-                                placeholder="Primary contact name"
-                                disabled={isLoading}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="contact_phone">Contact Phone</label>
-                            <input
-                                id="contact_phone"
-                                type="tel"
-                                name="contact_phone"
-                                value={formData.contact_phone}
-                                onChange={handleChange}
-                                placeholder="Phone number"
+                                placeholder="John Doe"
                                 disabled={isLoading}
                             />
                         </div>
                     </div>
 
-                    <button type="submit" className="btn-primary" disabled={isLoading}>
-                        {isLoading ? 'Creating Account...' : 'Create Account'}
-                    </button>
+                    <div className={signupStyles.formSection}>
+                        <label className={signupStyles.sectionLabel}>Security</label>
+                        <div className={signupStyles.grid}>
+                            <Input
+                                label="Password *"
+                                name="password"
+                                type="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="••••••••"
+                                required
+                                disabled={isLoading}
+                            />
+                            <Input
+                                label="Confirm Password *"
+                                name="confirmPassword"
+                                type="password"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                placeholder="••••••••"
+                                required
+                                disabled={isLoading}
+                            />
+                        </div>
+                    </div>
+
+                    <Button 
+                        type="submit" 
+                        loading={isLoading}
+                        className={styles.submitButton}
+                    >
+                        Create Organization Account
+                    </Button>
                 </form>
 
-                <p className="auth-footer">
-                    Already have an account? <Link to="/login">Sign in here</Link>
+                <p className={styles.footer}>
+                    Already have an account? <Link to="/login" className={styles.link}>Sign in</Link>
                 </p>
             </div>
         </div>

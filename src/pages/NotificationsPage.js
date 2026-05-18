@@ -1,12 +1,16 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../context/adminStore';
 import { useAuthStore } from '../context/authStore';
-import '../styles/FacilitatorsList.css';
+import { AppShell } from '../components/AppShell';
+import { Badge } from '../components/Badge';
+import { Button } from '../components/Button';
+import { DataTable } from '../components/DataTable';
+import styles from './NotificationsPage.module.css';
 
 export const NotificationsPage = () => {
     const navigate = useNavigate();
-    const { user, logout, roles } = useAuthStore();
+    const { user, roles } = useAuthStore();
     const {
         organizations,
         isLoading,
@@ -21,116 +25,71 @@ export const NotificationsPage = () => {
             return;
         }
         fetchOrganizations(1, 100);
-    }, []);
-
-    const handleLogout = async () => {
-        await logout();
-        navigate('/login');
-    };
+    }, [roles, user?.user_type, navigate, fetchOrganizations]);
 
     const pendingOrganizations = organizations.filter(org => org.status === 'pending');
 
+    const columns = [
+        { 
+            key: 'name', 
+            label: 'Organization',
+            render: (val) => <strong>{val}</strong>
+        },
+        { key: 'industry', label: 'Industry', render: (val) => val || '—' },
+        { key: 'primary_contact_name', label: 'Contact', render: (val) => val || '—' },
+        { 
+            key: 'created_at', 
+            label: 'Submitted', 
+            render: (val) => val ? new Date(val).toLocaleDateString() : 'N/A' 
+        },
+        { 
+            key: 'actions', 
+            label: 'Action',
+            render: (_, row) => (
+                <Link to={`/admin/organizations/${row.id}`}>
+                    <Button size="sm">Review & Approve</Button>
+                </Link>
+            )
+        }
+    ];
+
     return (
-        <div className="super-admin-container">
-            <header className="admin-header">
-                <div className="header-content">
-                    <div className="logo-section">
-                        <h1>Zylo Admin</h1>
-                        <span className="user-type">Super Administrator</span>
-                    </div>
-                    <div className="header-actions">
-                        <span className="user-info">{user?.email}</span>
-                        <button onClick={handleLogout} className="btn-logout">
-                            Logout
-                        </button>
-                    </div>
+        <AppShell title="Notifications">
+            {error && (
+                <div className={styles.error}>
+                    {error}
+                    <button onClick={clearError}>×</button>
                 </div>
-            </header>
+            )}
 
-            <main className="admin-main">
-                <aside className="admin-sidebar">
-                    <nav className="sidebar-nav">
-                        <Link to="/admin" className="nav-link">
-                            Dashboard
-                        </Link>
-                        <Link to="/admin/facilitators" className="nav-link">
-                            Facilitators
-                        </Link>
-                        <Link to="/admin/organizations" className="nav-link">
-                            Organizations
-                        </Link>
-                        <Link to="/admin/notifications" className="nav-link active">
-                            Notifications
-                        </Link>
-                        <Link to="/admin/settings" className="nav-link">
-                            Settings
-                        </Link>
-                    </nav>
-                </aside>
-
-                <section className="admin-content">
-                    <div className="page-header">
-                        <h2>Notifications & Approvals</h2>
-                    </div>
-
-                    {error && (
-                        <div className="error-message">
-                            {error}
-                            <button onClick={clearError} className="btn-close">
-                                ×
-                            </button>
-                        </div>
+            <div className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h3 className={styles.sectionTitle}>Pending Organization Approvals</h3>
+                    {pendingOrganizations.length > 0 && (
+                        <Badge status="pending">{pendingOrganizations.length} pending</Badge>
                     )}
+                </div>
 
-                    <div className="notifications-list">
-                        <h3>Pending Organization Approvals</h3>
-                        {isLoading ? (
-                            <div className="loading">Loading notifications...</div>
-                        ) : pendingOrganizations.length > 0 ? (
-                            <div className="table-responsive">
-                                <table className="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Organization Name</th>
-                                            <th>Industry</th>
-                                            <th>Contact Person</th>
-                                            <th>Registration Date</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pendingOrganizations.map((org) => (
-                                            <tr key={org.id} style={{ backgroundColor: '#fffbe6' }}>
-                                                <td>
-                                                    <strong>{org.name}</strong>
-                                                </td>
-                                                <td>{org.industry || '—'}</td>
-                                                <td>{org.primary_contact_name || '—'}</td>
-                                                <td>{org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A'}</td>
-                                                <td>
-                                                    <div className="action-buttons">
-                                                        <Link
-                                                            to={`/admin/organizations/${org.id}`}
-                                                            className="btn-primary"
-                                                            style={{ fontSize: '12px', padding: '6px 12px' }}
-                                                        >
-                                                            Review & Approve
-                                                        </Link>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="no-data">
-                                <p>No new notifications at this time.</p>
-                            </div>
-                        )}
+                {isLoading ? (
+                    <div className={styles.loading}>Loading...</div>
+                ) : pendingOrganizations.length > 0 ? (
+                    <div className={styles.tableCard}>
+                        <DataTable
+                            columns={columns}
+                            data={pendingOrganizations}
+                            onRowClick={(row) => navigate(`/admin/organizations/${row.id}`)}
+                        />
                     </div>
-                </section>
-            </main>
-        </div>
+                ) : (
+                    <div className={styles.empty}>
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <p>No pending approvals at this time.</p>
+                    </div>
+                )}
+            </div>
+        </AppShell>
     );
 };

@@ -1,0 +1,85 @@
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.search {
+  width: 280px;
+}
+
+.tableCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.orgCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--bg-inset);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.pagination {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.pageInfo {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.error {
+  background: var(--danger-subtle);
+  color: var(--danger);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

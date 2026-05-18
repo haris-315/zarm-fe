@@ -1,0 +1,87 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.gridBackground {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(var(--border-default) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-default) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: 40px;
+  position: relative;
+  z-index: 1;
+  animation: slideUp var(--duration-slow) var(--ease-spring);
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.separator {
+  height: 1px;
+  background: var(--border-default);
+  margin: 16px 0 24px;
+}
+
+.title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.errorWrapper {
+  margin-bottom: 24px;
+  animation: slideDown var(--duration-base) var(--ease-standard);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.submitButton {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.link {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
