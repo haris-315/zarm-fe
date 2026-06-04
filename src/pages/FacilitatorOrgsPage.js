@@ -73,9 +73,17 @@ export const FacilitatorOrgsPage = () => {
                         </div>
                     ))}
                 </div>
+            ) : search ? (
+                <div className={styles.empty}>
+                    <p>No organizations match your search.</p>
+                </div>
             ) : (
                 <div className={styles.empty}>
-                    <p>No organizations found</p>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <p>No organizations assigned yet.</p>
+                    <p style={{ fontSize: '13px', opacity: 0.6 }}>Your administrator hasn't assigned any organizations to your account.</p>
                 </div>
             )}
         </AppShell>

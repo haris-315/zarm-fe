@@ -38,4 +38,19 @@ export const facilitatorAPI = {
         const response = await apiClient.post(`/admin/facilitators/${facilitatorId}/extra-permissions`, { extra_permissions: permissions });
         return response.data;
     },
+
+    getAssignedOrgs: async (facilitatorId) => {
+        const response = await apiClient.get(`/admin/facilitators/${facilitatorId}/organizations`);
+        return response.data;
+    },
+
+    assignOrgs: async (facilitatorId, organizationIds) => {
+        const response = await apiClient.post(`/admin/facilitators/${facilitatorId}/organizations`, { organization_ids: organizationIds });
+        return response.data;
+    },
+
+    removeOrg: async (facilitatorId, orgId) => {
+        const response = await apiClient.delete(`/admin/facilitators/${facilitatorId}/organizations/${orgId}`);
+        return response.data;
+    },
 };

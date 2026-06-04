@@ -200,6 +200,47 @@ export const useAdminStore = create((set, get) => ({
     // Clear selected facilitator
     clearSelectedFacilitator: () => set({ selectedFacilitator: null }),
 
+    // Facilitator org assignment
+    facilitatorOrgs: [],
+    facilitatorOrgsLoading: false,
+
+    fetchFacilitatorOrgs: async (facilitatorId) => {
+        set({ facilitatorOrgsLoading: true });
+        try {
+            const data = await facilitatorAPI.getAssignedOrgs(facilitatorId);
+            // Handle both array response and wrapped response
+            const orgs = Array.isArray(data) ? data : (data.organizations || []);
+            console.log('Fetched facilitator orgs:', orgs);
+            set({ facilitatorOrgs: orgs, facilitatorOrgsLoading: false });
+        } catch (error) {
+            // 404 = endpoint not yet deployed; treat as no assignments
+            if (error.response?.status === 404) {
+                set({ facilitatorOrgs: [], facilitatorOrgsLoading: false });
+                return;
+            }
+            console.error('Error fetching facilitator orgs:', error);
+            set({ facilitatorOrgsLoading: false });
+            throw error;
+        }
+    },
+
+    assignFacilitatorOrgs: async (facilitatorId, organizationIds) => {
+        set({ facilitatorOrgsLoading: true });
+        try {
+            const data = await facilitatorAPI.assignOrgs(facilitatorId, organizationIds);
+            set({ facilitatorOrgsLoading: false });
+            return data;
+        } catch (error) {
+            set({ facilitatorOrgsLoading: false });
+            if (error.response?.status === 404) {
+                const err = new Error('Assignment endpoint not yet available on the backend.');
+                err.notReady = true;
+                throw err;
+            }
+            throw error;
+        }
+    },
+
     // Organizations state
     organizations: [],
     selectedOrganization: null,

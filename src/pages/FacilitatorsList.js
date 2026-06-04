@@ -11,6 +11,7 @@ import { Modal } from '../components/Modal';
 import { ExtraPermissionsModal } from '../components/ExtraPermissionsModal';
 import { Toast } from '../components/Toast';
 import { PermissionBadgeGroup } from '../components/PermissionBadge';
+import { FacilitatorOrgAssignModal } from '../components/FacilitatorOrgAssignModal';
 import styles from './FacilitatorsList.module.css';
 
 const GearIcon = () => (
@@ -43,8 +44,9 @@ export const FacilitatorsList = () => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [deleteConfirm, setDeleteConfirm] = useState(null);
-    const [roleDropdown, setRoleDropdown] = useState(null); // facilitator id
-    const [permTarget, setPermTarget] = useState(null);     // facilitator object
+    const [roleDropdown, setRoleDropdown] = useState(null);
+    const [permTarget, setPermTarget] = useState(null);
+    const [orgAssignTarget, setOrgAssignTarget] = useState(null);
     const [toast, setToast] = useState(null);
 
     useEffect(() => {
@@ -174,6 +176,19 @@ export const FacilitatorsList = () => {
             },
         },
         {
+            key: 'organizations',
+            label: 'Organizations',
+            render: (_, row) => (
+                <button
+                    className={styles.orgAssignBtn}
+                    onClick={(e) => { e.stopPropagation(); setOrgAssignTarget(row); }}
+                >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Manage
+                </button>
+            ),
+        },
+        {
             key: 'actions',
             label: 'Actions',
             render: (_, row) => (
@@ -286,6 +301,14 @@ export const FacilitatorsList = () => {
                 extraPermissions={permTarget?.extra_permissions || []}
                 availablePermissions={availableRolePermissions}
                 onSave={handleSaveExtraPerms}
+            />
+
+            {/* Organization Assignment Modal */}
+            <FacilitatorOrgAssignModal
+                isOpen={!!orgAssignTarget}
+                onClose={() => setOrgAssignTarget(null)}
+                facilitator={orgAssignTarget}
+                onSaved={() => setToast({ type: 'success', message: 'Organizations updated' })}
             />
         </AppShell>
     );

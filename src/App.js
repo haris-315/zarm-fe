@@ -14,6 +14,7 @@ import { OrganizationDetail } from './pages/OrganizationDetail';
 import { OrganizationMembers } from './pages/OrganizationMembers';
 import { OrganizationsList } from './pages/OrganizationsList';
 import { OrgMembersPage } from './pages/OrgMembersPage';
+import { OrgRolesPage } from './pages/OrgRolesPage';
 import { RolesPage } from './pages/RolesPage';
 import { SignupPage } from './pages/SignupPage';
 import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
@@ -164,6 +165,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/org/roles"
+        element={
+          <ProtectedRoute requiredRoles={['org_admin']}>
+            <OrgRolesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/org/sprints/:sprintId"
         element={
           <ProtectedRoute requiredRoles={['org_admin', 'manager', 'member']}>
@@ -205,7 +214,7 @@ function AppRoutes() {
 
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AppInitializer>
         <AppRoutes />
       </AppInitializer>

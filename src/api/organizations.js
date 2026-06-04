@@ -97,4 +97,58 @@ export const organizationAPI = {
         });
         return response.data;
     },
+
+    // Organization Roles (org-level)
+    listOrgRoles: async (orgId) => {
+        const response = await apiClient.get(`/org/roles`);
+        return response.data;
+    },
+
+    listOrgRolePermissions: async (orgId) => {
+        const response = await apiClient.get(`/org/roles/permissions`);
+        return response.data;
+    },
+
+    createOrgRole: async (orgId, roleData) => {
+        const response = await apiClient.post(`/org/roles`, roleData);
+        return response.data;
+    },
+
+    updateOrgRole: async (orgId, roleId, roleData) => {
+        const response = await apiClient.patch(`/org/roles/${roleId}`, roleData);
+        return response.data;
+    },
+
+    deleteOrgRole: async (orgId, roleId) => {
+        const response = await apiClient.delete(`/org/roles/${roleId}`);
+        return response.data;
+    },
+
+    // Organization Members (org-level)
+    listOrgMembers: async (page = 1, pageSize = 20) => {
+        const response = await apiClient.get(`/org/members`, {
+            params: { page, page_size: pageSize },
+        });
+        return response.data;
+    },
+
+    getOrgMember: async (userId) => {
+        const response = await apiClient.get(`/org/members/${userId}`);
+        return response.data;
+    },
+
+    updateOrgMember: async (userId, updateData) => {
+        const response = await apiClient.patch(`/org/members/${userId}`, updateData);
+        return response.data;
+    },
+
+    removeOrgMember: async (userId) => {
+        const response = await apiClient.delete(`/org/members/${userId}`);
+        return response.data;
+    },
+
+    inviteOrgMember: async (memberData) => {
+        const response = await apiClient.post(`/org/members`, memberData);
+        return response.data;
+    },
 };

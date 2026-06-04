@@ -1,0 +1,146 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-default);
+    margin-bottom: 4px;
+}
+
+.counter {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.counter strong {
+    color: var(--accent-text);
+}
+
+.search {
+    width: 220px;
+}
+
+.toast {
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    margin: 8px 0;
+}
+
+.toast.success {
+    background: var(--success-subtle);
+    color: var(--success);
+}
+
+.toast.error {
+    background: var(--danger-subtle);
+    color: var(--danger);
+}
+
+.loading,
+.empty {
+    padding: 40px 0;
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+}
+
+.list {
+    max-height: 360px;
+    overflow-y: auto;
+    margin: 0 -4px;
+    padding: 4px 0;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-standard);
+    user-select: none;
+}
+
+.row:hover {
+    background: var(--bg-subtle);
+}
+
+.rowChecked {
+    background: var(--accent-subtle);
+}
+
+.rowChecked:hover {
+    background: var(--accent-subtle);
+    filter: brightness(0.97);
+}
+
+.checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.orgLogo {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background: var(--bg-inset);
+    border: 1px solid var(--border-default);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.orgLogo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.orgInfo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.orgName {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.orgMeta {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 16px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border-default);
+}

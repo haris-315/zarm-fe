@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useAdminStore } from '../context/adminStore';
 import { useAuthStore } from '../context/authStore';
+import { organizationAPI } from '../api/organizations';
 import { AppShell } from '../components/AppShell';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
@@ -18,28 +18,15 @@ const GearIcon = () => (
 );
 
 export const OrgMembersPage = () => {
-    const { user, organization } = useAuthStore();
-    const {
-        orgMembers,
-        totalOrgMembers,
-        orgMembersCurrentPage,
-        orgMembersPageSize,
-        orgMembersLoading,
-        roles: platformRoles,
-        availablePermissions,
-        availableRolePermissions,
-        error,
-        fetchOrgMembers,
-        fetchAvailablePermissions,
-        fetchRoles,
-        fetchAvailableRolePermissions,
-        removeOrgMember,
-        inviteOrgMember,
-        assignOrgMemberRole,
-        setOrgMemberExtraPermissions,
-        setOrgMembersPage,
-        clearError,
-    } = useAdminStore();
+    const { user } = useAuthStore();
+
+    const [members, setMembers] = useState([]);
+    const [roles, setRoles] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize] = useState(20);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -48,58 +35,87 @@ export const OrgMembersPage = () => {
     const [roleDropdown, setRoleDropdown] = useState(null);
     const [permTarget, setPermTarget] = useState(null);
     const [toast, setToast] = useState(null);
-
     const [inviteFormData, setInviteFormData] = useState({ email: '', role: 'member' });
 
+    // Load members and roles
     useEffect(() => {
-        fetchOrgMembers(orgMembersCurrentPage, orgMembersPageSize);
-        fetchAvailablePermissions();
-        fetchRoles();
-        fetchAvailableRolePermissions();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [orgMembersCurrentPage]);
+        const loadData = async () => {
+            try {
+                setLoading(true);
+                const [membersData, rolesData] = await Promise.all([
+                    organizationAPI.listOrgMembers(currentPage, pageSize),
+                    organizationAPI.listOrgRoles(),
+                ]);
+                setMembers(membersData.items || []);
+                setTotal(membersData.total || 0);
+                setRoles(rolesData.items || rolesData || []);
+            } catch (err) {
+                console.error('Failed to load org data:', err);
+                setError(err.response?.data?.detail || 'Failed to load data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, [currentPage, pageSize]);
 
     const handleRemoveMember = async (memberId) => {
-        setSubmitting(true);
         try {
-            await removeOrgMember(memberId);
+            await organizationAPI.removeOrgMember(memberId);
             setDeleteConfirm(null);
             setToast({ type: 'success', message: 'Member removed' });
-        } catch {
-            setToast({ type: 'error', message: 'Failed to remove member' });
-        } finally {
-            setSubmitting(false);
+            // Reload members
+            const data = await organizationAPI.listOrgMembers(currentPage, pageSize);
+            setMembers(data.items || []);
+            setTotal(data.total || 0);
+        } catch (err) {
+            setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to remove member' });
         }
     };
 
     const handleInviteMember = async (e) => {
         e.preventDefault();
-        setSubmitting(true);
         try {
-            await inviteOrgMember(inviteFormData);
+            await organizationAPI.inviteOrgMember(inviteFormData);
             setInviteModalOpen(false);
             setInviteFormData({ email: '', role: 'member' });
             setToast({ type: 'success', message: 'Invitation sent' });
-        } catch {
-            setToast({ type: 'error', message: 'Failed to send invite' });
-        } finally {
-            setSubmitting(false);
+            // Reload members
+            const data = await organizationAPI.listOrgMembers(currentPage, pageSize);
+            setMembers(data.items || []);
+            setTotal(data.total || 0);
+        } catch (err) {
+            setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to send invite' });
         }
     };
 
     const handleRoleAssign = async (memberId, roleId) => {
         setRoleDropdown(null);
         try {
-            await assignOrgMemberRole(memberId, roleId);
+            await organizationAPI.updateOrgMember(memberId, { role: roleId });
             setToast({ type: 'success', message: 'Role assigned' });
-        } catch {
-            setToast({ type: 'error', message: 'Failed to assign role' });
+            // Reload members
+            const data = await organizationAPI.listOrgMembers(currentPage, pageSize);
+            setMembers(data.items || []);
+            setTotal(data.total || 0);
+        } catch (err) {
+            setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to assign role' });
         }
     };
 
     const handleSaveExtraPerms = async (newPerms) => {
         if (!permTarget) return;
-        await setOrgMemberExtraPermissions(permTarget.id, newPerms);
+        try {
+            await organizationAPI.updateOrgMember(permTarget.id, { extra_permissions: newPerms });
+            setToast({ type: 'success', message: 'Permissions updated' });
+            // Reload members
+            const data = await organizationAPI.listOrgMembers(currentPage, pageSize);
+            setMembers(data.items || []);
+            setTotal(data.total || 0);
+            setPermTarget(null);
+        } catch (err) {
+            setToast({ type: 'error', message: err.response?.data?.detail || 'Failed to update permissions' });
+        }
     };
 
     const getAssignedRoleName = (member) =>
@@ -113,18 +129,23 @@ export const OrgMembersPage = () => {
             .filter((code) => code && !extraCodes.includes(code));
     };
 
-    const filteredMembers = orgMembers.filter(
+    const filteredMembers = members.filter(
         (member) =>
             member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
             member.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const combinedAvailablePerms = [
-        ...(availableRolePermissions || []),
-        ...(availablePermissions || []),
-    ].filter((v, i, arr) => {
-        const code = typeof v === 'string' ? v : v.code || v.name;
-        return arr.findIndex((x) => (typeof x === 'string' ? x : x.code || x.name) === code) === i;
+    // Get all unique permissions from all roles
+    const allPermissions = [];
+    roles.forEach(role => {
+        if (role.permissions) {
+            role.permissions.forEach(perm => {
+                const code = typeof perm === 'string' ? perm : perm.code;
+                if (!allPermissions.find(p => (typeof p === 'string' ? p : p.code) === code)) {
+                    allPermissions.push(perm);
+                }
+            });
+        }
     });
 
     const columns = [
@@ -164,10 +185,10 @@ export const OrgMembersPage = () => {
                             {isOpen && (
                                 <div className={styles.dropdown} onClick={(e) => e.stopPropagation()}>
                                     <div className={styles.dropdownHeader}>Assign Role</div>
-                                    {platformRoles.length === 0 ? (
+                                    {roles.length === 0 ? (
                                         <div className={styles.dropdownEmpty}>No roles available</div>
                                     ) : (
-                                        platformRoles.map((r) => (
+                                        roles.map((r) => (
                                             <button
                                                 key={r.id}
                                                 className={`${styles.dropdownItem} ${roleName === r.name ? styles.dropdownItemActive : ''}`}
@@ -211,11 +232,11 @@ export const OrgMembersPage = () => {
         },
     ];
 
-    const totalPages = Math.ceil(totalOrgMembers / orgMembersPageSize);
+    const totalPages = Math.ceil(total / pageSize);
 
     return (
         <AppShell
-            title="Team Members"
+            title="Organization Management"
             actions={
                 <div className={styles.topActions}>
                     <Input
@@ -228,61 +249,70 @@ export const OrgMembersPage = () => {
                 </div>
             }
         >
+            {/* Navigation tabs */}
+            <div style={{
+                display: 'flex',
+                gap: '0',
+                borderBottom: '1px solid #e5e7eb',
+                marginBottom: '24px',
+            }}>
+                <a href="/org/members" style={{
+                    padding: '12px 16px',
+                    color: '#374151',
+                    textDecoration: 'none',
+                    borderBottom: '2px solid #3b82f6',
+                    fontWeight: '500',
+                    fontSize: '14px',
+                }}>
+                    Members
+                </a>
+                <a href="/org/roles" style={{
+                    padding: '12px 16px',
+                    color: '#6b7280',
+                    textDecoration: 'none',
+                    borderBottom: '2px solid transparent',
+                    fontWeight: '500',
+                    fontSize: '14px',
+                    transition: 'all 0.2s',
+                }}>
+                    Roles & Permissions
+                </a>
+            </div>
+
             {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
-            {error && <div className={styles.error}>{error} <button onClick={clearError}>×</button></div>}
+            {error && <div className={styles.error}>{error} <button onClick={() => setError(null)}>×</button></div>}
 
             {/* Close dropdown on outside click */}
             {roleDropdown && (
                 <div className={styles.dropdownOverlay} onClick={() => setRoleDropdown(null)} />
             )}
 
-            {/* Org summary strip for the admin */}
-            {organization && (
-                <div className={styles.orgStrip}>
-                    <div className={styles.orgStripLeft}>
-                        <div className={styles.orgLogoSmall}>
-                            {organization.logo_url
-                                ? <img src={organization.logo_url} alt="" />
-                                : organization.name?.charAt(0)}
-                        </div>
-                        <div>
-                            <div className={styles.orgName}>{organization.name}</div>
-                            <div className={styles.orgMeta}>{organization.industry || 'Organization'}</div>
-                        </div>
-                    </div>
-                    <div className={styles.orgStripRight}>
-                        <Badge status={organization.status}>{organization.status}</Badge>
-                        <span className={styles.memberCount}>{totalOrgMembers} members</span>
-                    </div>
-                </div>
-            )}
-
             <div className={styles.tableCard}>
                 <DataTable
                     columns={columns}
                     data={filteredMembers}
-                    loading={orgMembersLoading}
+                    loading={loading}
                 />
             </div>
 
-            {totalPages > 1 && (
+            {Math.ceil(total / pageSize) > 1 && (
                 <div className={styles.pagination}>
                     <Button
                         variant="secondary"
                         size="sm"
-                        disabled={orgMembersCurrentPage === 1}
-                        onClick={() => setOrgMembersPage(orgMembersCurrentPage - 1)}
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
                     >
                         Previous
                     </Button>
                     <div className={styles.pageInfo}>
-                        Page {orgMembersCurrentPage} of {totalPages}
+                        Page {currentPage} of {Math.ceil(total / pageSize)}
                     </div>
                     <Button
                         variant="secondary"
                         size="sm"
-                        disabled={orgMembersCurrentPage === totalPages}
-                        onClick={() => setOrgMembersPage(orgMembersCurrentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(currentPage + 1)}
                     >
                         Next
                     </Button>
@@ -337,7 +367,7 @@ export const OrgMembersPage = () => {
                 targetName={permTarget?.full_name || permTarget?.email || ''}
                 rolePermissions={permTarget ? getRolePermCodes(permTarget) : []}
                 extraPermissions={permTarget?.extra_permissions || []}
-                availablePermissions={combinedAvailablePerms}
+                availablePermissions={allPermissions}
                 onSave={handleSaveExtraPerms}
             />
         </AppShell>
