@@ -89,10 +89,10 @@ export const OrgMembersPage = () => {
         }
     };
 
-    const handleRoleAssign = async (memberId, roleId) => {
+    const handleRoleAssign = async (memberId, roleName) => {
         setRoleDropdown(null);
         try {
-            await organizationAPI.updateOrgMember(memberId, { role: roleId });
+            await organizationAPI.updateOrgMember(memberId, { role: roleName });
             setToast({ type: 'success', message: 'Role assigned' });
             // Reload members
             const data = await organizationAPI.listOrgMembers(currentPage, pageSize);
@@ -192,7 +192,7 @@ export const OrgMembersPage = () => {
                                             <button
                                                 key={r.id}
                                                 className={`${styles.dropdownItem} ${roleName === r.name ? styles.dropdownItemActive : ''}`}
-                                                onClick={() => handleRoleAssign(row.id, r.id)}
+                                                onClick={() => handleRoleAssign(row.id, r.name)}
                                             >
                                                 {r.name}
                                                 {r.is_custom && <span className={styles.customTag}>Custom</span>}

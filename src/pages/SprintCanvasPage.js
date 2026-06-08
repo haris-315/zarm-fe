@@ -16,7 +16,7 @@ import { DecisionCard } from '../components/sprint/DecisionCard';
 import { DocumentViewer } from '../components/sprint/DocumentViewer';
 import styles from './SprintCanvasPage.module.css';
 
-const TABS = ['Overview', 'Findings', 'Decision Cards', 'Reports'];
+const TABS = ['Overview', 'Findings', 'Decision Cards', 'Reports', 'Meetings'];
 const DAY_LABELS = ['Discovery', 'Analysis', 'Scoring', 'Strategy', 'Delivery'];
 const FINDING_TYPES = ['Problem', 'Opportunity', 'Observation'];
 const PRIORITY_TIERS = ['Quick Win', 'Strategic', 'Technical Debt', 'Backlog'];
@@ -70,6 +70,10 @@ export const SprintCanvasPage = () => {
         if (activeTab === 'Findings') fetchFindings(sprintId, dayFilter, 1);
         if (activeTab === 'Decision Cards') fetchDecisionCards(sprintId, 1);
         if (activeTab === 'Reports') fetchReports(sprintId, 1);
+        if (activeTab === 'Meetings') {
+            const basePath = user?.user_type === 'super_admin' ? '/admin' : user?.organization_id ? '/org' : '/facilitator';
+            navigate(`${basePath}/sprints/${sprintId}/meetings`);
+        }
         
         // Update tab indicator
         const activeTabEl = tabRefs.current[activeTab];
