@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../context/authStore';
 import { meetingsAPI } from '../api/meetings';
 import { sprintAPI } from '../api/sprints';
@@ -9,6 +9,7 @@ import { Input, Select } from '../components/Input';
 import { DataTable } from '../components/DataTable';
 import { Modal } from '../components/Modal';
 import { Toast } from '../components/Toast';
+import { TimePickerInput } from '../components/TimePickerInput';
 import styles from './MeetingsPage.module.css';
 
 const CalendarIcon = () => (
@@ -37,6 +38,7 @@ const MEETING_STATUSES = [
 export const MeetingsPage = () => {
     const { user, roles } = useAuthStore();
     const { sprintId } = useParams();
+    const navigate = useNavigate();
 
     const canCreateMeeting = roles && (roles.includes('super_admin') || roles.includes('facilitator'));
 
@@ -57,20 +59,35 @@ export const MeetingsPage = () => {
     const [formData, setFormData] = useState({
         title: '',
         meeting_type: 'discovery',
-        scheduled_start_at: '',
-        scheduled_end_at: '',
-        meeting_url: '',
+        scheduled_start_date: '',
+        scheduled_start_time: '',
+        scheduled_end_date: '',
+        scheduled_end_time: '',
+        participants: [],
     });
 
-    const formatDatetimeLocal = (isoString) => {
+    const formatDateLocal = (isoString) => {
         if (!isoString) return '';
         const date = new Date(isoString);
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const formatTimeLocal = (isoString) => {
+        if (!isoString) return '';
+        const date = new Date(isoString);
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
+        return `${hours}:${minutes}`;
+    };
+
+    const combineDateAndTime = (dateStr, timeStr) => {
+        if (!dateStr) return null;
+        const timeComponent = timeStr ? `T${timeStr}:00Z` : 'T00:00:00Z';
+        const dateTime = new Date(dateStr + timeComponent);
+        return dateTime.toISOString();
     };
 
     // Load meetings and sprint info
@@ -104,23 +121,24 @@ export const MeetingsPage = () => {
             const payload = {
                 title: formData.title,
                 meeting_type: formData.meeting_type,
-                meeting_url: formData.meeting_url || null,
             };
 
-            // Convert datetime-local to ISO format
-            if (formData.scheduled_start_at) {
-                const startDate = new Date(formData.scheduled_start_at);
-                payload.scheduled_start_at = startDate.toISOString();
+            // Add participants if provided
+            if (formData.participants && formData.participants.length > 0) {
+                payload.participants = formData.participants;
             }
-            if (formData.scheduled_end_at) {
-                const endDate = new Date(formData.scheduled_end_at);
-                payload.scheduled_end_at = endDate.toISOString();
-            }
+
+            // Combine date and time into ISO format
+            const startDateTime = combineDateAndTime(formData.scheduled_start_date, formData.scheduled_start_time);
+            const endDateTime = combineDateAndTime(formData.scheduled_end_date, formData.scheduled_end_time);
+
+            if (startDateTime) payload.scheduled_start_at = startDateTime;
+            if (endDateTime) payload.scheduled_end_at = endDateTime;
 
             await meetingsAPI.createMeeting(sprintId, payload);
             setToast({ type: 'success', message: 'Meeting created successfully' });
             setCreateModalOpen(false);
-            setFormData({ title: '', meeting_type: 'discovery', scheduled_start_at: '', scheduled_end_at: '', meeting_url: '' });
+            setFormData({ title: '', meeting_type: 'discovery', scheduled_start_date: '', scheduled_start_time: '', scheduled_end_date: '', scheduled_end_time: '', participants: [] });
 
             // Reload meetings
             const meetingsData = await meetingsAPI.listSprintMeetings(sprintId, currentPage, pageSize);
@@ -142,21 +160,19 @@ export const MeetingsPage = () => {
 
             if (formData.title) payload.title = formData.title;
             if (formData.meeting_type) payload.meeting_type = formData.meeting_type;
-            if (formData.meeting_url !== undefined) payload.meeting_url = formData.meeting_url || null;
+            if (formData.participants) payload.participants = formData.participants;
 
-            if (formData.scheduled_start_at) {
-                const startDate = new Date(formData.scheduled_start_at);
-                payload.scheduled_start_at = startDate.toISOString();
-            }
-            if (formData.scheduled_end_at) {
-                const endDate = new Date(formData.scheduled_end_at);
-                payload.scheduled_end_at = endDate.toISOString();
-            }
+            // Combine date and time into ISO format
+            const startDateTime = combineDateAndTime(formData.scheduled_start_date, formData.scheduled_start_time);
+            const endDateTime = combineDateAndTime(formData.scheduled_end_date, formData.scheduled_end_time);
+
+            if (startDateTime) payload.scheduled_start_at = startDateTime;
+            if (endDateTime) payload.scheduled_end_at = endDateTime;
 
             await meetingsAPI.updateMeeting(editingMeeting.id, payload);
             setToast({ type: 'success', message: 'Meeting updated successfully' });
             setEditingMeeting(null);
-            setFormData({ title: '', meeting_type: 'discovery', scheduled_start_at: '', scheduled_end_at: '', meeting_url: '' });
+            setFormData({ title: '', meeting_type: 'discovery', scheduled_start_date: '', scheduled_start_time: '', scheduled_end_date: '', scheduled_end_time: '', participants: [] });
 
             // Reload meetings
             const meetingsData = await meetingsAPI.listSprintMeetings(sprintId, currentPage, pageSize);
@@ -190,16 +206,18 @@ export const MeetingsPage = () => {
         setFormData({
             title: meeting.title,
             meeting_type: meeting.meeting_type,
-            scheduled_start_at: formatDatetimeLocal(meeting.scheduled_start_at),
-            scheduled_end_at: formatDatetimeLocal(meeting.scheduled_end_at),
-            meeting_url: meeting.meeting_url || '',
+            scheduled_start_date: formatDateLocal(meeting.scheduled_start_at),
+            scheduled_start_time: formatTimeLocal(meeting.scheduled_start_at),
+            scheduled_end_date: formatDateLocal(meeting.scheduled_end_at),
+            scheduled_end_time: formatTimeLocal(meeting.scheduled_end_at),
+            participants: meeting.participants || [],
         });
     };
 
     const handleCloseModal = () => {
         setCreateModalOpen(false);
         setEditingMeeting(null);
-        setFormData({ title: '', meeting_type: 'discovery', scheduled_start_at: '', scheduled_end_at: '', meeting_url: '' });
+        setFormData({ title: '', meeting_type: 'discovery', scheduled_start_date: '', scheduled_start_time: '', scheduled_end_date: '', scheduled_end_time: '', participants: [] });
     };
 
     const getMeetingTypeLabel = (type) => {
@@ -216,11 +234,16 @@ export const MeetingsPage = () => {
         {
             key: 'title',
             label: 'Meeting',
-            render: (val) => (
-                <div className={styles.titleCell}>
-                    <CalendarIcon />
-                    {val}
-                </div>
+            render: (val, row) => (
+                <button
+                    className={styles.titleLink}
+                    onClick={() => navigate(`${window.location.pathname.replace('/meetings', '')}/meetings/${row.id}`)}
+                >
+                    <div className={styles.titleCell}>
+                        <CalendarIcon />
+                        {val}
+                    </div>
+                </button>
             ),
         },
         {
@@ -309,6 +332,7 @@ export const MeetingsPage = () => {
                 isOpen={createModalOpen || !!editingMeeting}
                 onClose={handleCloseModal}
                 title={editingMeeting ? 'Edit Meeting' : 'Schedule New Meeting'}
+                size="lg"
             >
                 <form onSubmit={editingMeeting ? handleUpdateMeeting : handleCreateMeeting} className={styles.form}>
                     <Input
@@ -327,26 +351,43 @@ export const MeetingsPage = () => {
                         options={MEETING_TYPES}
                     />
 
-                    <Input
-                        label="Start Date & Time"
-                        type="datetime-local"
-                        value={formData.scheduled_start_at}
-                        onChange={(e) => setFormData({ ...formData, scheduled_start_at: e.target.value })}
-                    />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <Input
+                            label="Start Date"
+                            type="date"
+                            value={formData.scheduled_start_date}
+                            onChange={(e) => setFormData({ ...formData, scheduled_start_date: e.target.value })}
+                        />
+                        <TimePickerInput
+                            label="Start Time"
+                            value={formData.scheduled_start_time}
+                            onChange={(time) => setFormData({ ...formData, scheduled_start_time: time })}
+                        />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <Input
+                            label="End Date"
+                            type="date"
+                            value={formData.scheduled_end_date}
+                            onChange={(e) => setFormData({ ...formData, scheduled_end_date: e.target.value })}
+                        />
+                        <TimePickerInput
+                            label="End Time"
+                            value={formData.scheduled_end_time}
+                            onChange={(time) => setFormData({ ...formData, scheduled_end_time: time })}
+                        />
+                    </div>
 
                     <Input
-                        label="End Date & Time"
-                        type="datetime-local"
-                        value={formData.scheduled_end_at}
-                        onChange={(e) => setFormData({ ...formData, scheduled_end_at: e.target.value })}
-                    />
-
-                    <Input
-                        label="Meeting URL (Zoom, Teams, etc.)"
-                        type="url"
-                        value={formData.meeting_url}
-                        onChange={(e) => setFormData({ ...formData, meeting_url: e.target.value })}
-                        placeholder="https://zoom.us/j/..."
+                        label="Participants (comma-separated emails)"
+                        type="text"
+                        value={formData.participants.join(', ')}
+                        onChange={(e) => setFormData({
+                            ...formData,
+                            participants: e.target.value.split(',').map(email => email.trim()).filter(email => email)
+                        })}
+                        placeholder="john@company.com, jane@company.com"
                     />
 
                     <div className={styles.modalFooter}>

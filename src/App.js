@@ -24,6 +24,7 @@ import { OrgSprintsPage } from './pages/OrgSprintsPage';
 import { SprintCanvasPage } from './pages/SprintCanvasPage';
 import { AdminOrgSprintsPage } from './pages/AdminOrgSprintsPage';
 import { MeetingsPage } from './pages/MeetingsPage';
+import { MeetingDetailsPage } from './pages/MeetingDetailsPage';
 
 // App initializer component
 function AppInitializer({ children }) {
@@ -163,6 +164,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin/sprints/:sprintId/meetings/:meetingId"
+        element={
+          <ProtectedRoute requiredRoles={['super_admin']}>
+            <MeetingDetailsPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Organization Admin / Member Routes */}
       <Route
@@ -197,6 +206,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/org/sprints/:sprintId/meetings/:meetingId"
+        element={
+          <ProtectedRoute requiredRoles={['org_admin', 'manager', 'member']}>
+            <MeetingDetailsPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Facilitator Sprint Routes */}
       <Route
@@ -228,6 +245,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredPermissions={['sprint.read']}>
             <MeetingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/facilitator/sprints/:sprintId/meetings/:meetingId"
+        element={
+          <ProtectedRoute requiredPermissions={['sprint.read']}>
+            <MeetingDetailsPage />
           </ProtectedRoute>
         }
       />

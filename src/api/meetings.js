@@ -29,6 +29,12 @@ export const meetingsAPI = {
         return response.data;
     },
 
+    // Get full meeting details with transcript
+    getMeetingFullDetails: async (meetingId) => {
+        const response = await apiClient.get(`/meetings/${meetingId}/details`);
+        return response.data;
+    },
+
     // Update a meeting
     updateMeeting: async (meetingId, data) => {
         const response = await apiClient.patch(`/meetings/${meetingId}`, data);
