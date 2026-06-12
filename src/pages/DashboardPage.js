@@ -266,8 +266,8 @@ export const DashboardPage = () => {
                                 onKeyDown={(e) => e.key === 'Enter' && handleSprintClick(sprint)}
                             >
                                 <div className={styles.sprintMain}>
-                                    <h4 className={styles.sprintTitle}>{sprint.name || 'Untitled Sprint'}</h4>
-                                    <p className={styles.sprintSubtitle}>{sprint.engagement_name || 'Strategic Assessment'}</p>
+                                    <h4 className={styles.sprintTitle}>{sprint.title || 'Untitled Sprint'}</h4>
+                                    <p className={styles.sprintSubtitle}>{sprint.description || 'Strategic Assessment'}</p>
                                 </div>
                                 <div className={styles.sprintMeta}>
                                     <Badge status={sprint.status}>{sprint.status}</Badge>

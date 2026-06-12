@@ -197,7 +197,7 @@ export const SprintCanvasPage = () => {
             </button>
             <div className={styles.titleInfo}>
                 <h1 className={styles.pageTitle}>{currentSprint?.title}</h1>
-                <DayProgress currentDay={currentSprint?.current_day} />
+                <DayProgress currentDay={currentSprint?.current_day_number} />
             </div>
         </div>
     );
@@ -235,16 +235,16 @@ export const SprintCanvasPage = () => {
                                 </div>
                                 <div className={styles.infoGrid}>
                                     <div className={styles.infoItem}>
-                                        <label className={styles.infoLabel}>Engagement</label>
-                                        <div className={styles.infoValue}>{currentSprint.engagement_name || 'Strategic Assessment'}</div>
+                                        <label className={styles.infoLabel}>Description</label>
+                                        <div className={styles.infoValue}>{currentSprint.description || 'Strategic Assessment'}</div>
                                     </div>
                                     <div className={styles.infoItem}>
-                                        <label className={styles.infoLabel}>Scheduled Start</label>
-                                        <div className={styles.infoValue}>{new Date(currentSprint.scheduled_start).toLocaleDateString()}</div>
+                                        <label className={styles.infoLabel}>Start Date</label>
+                                        <div className={styles.infoValue}>{currentSprint.start_date ? new Date(currentSprint.start_date).toLocaleDateString() : 'TBD'}</div>
                                     </div>
                                     <div className={styles.infoItem}>
-                                        <label className={styles.infoLabel}>Scheduled End</label>
-                                        <div className={styles.infoValue}>{new Date(currentSprint.scheduled_end).toLocaleDateString()}</div>
+                                        <label className={styles.infoLabel}>End Date</label>
+                                        <div className={styles.infoValue}>{currentSprint.end_date ? new Date(currentSprint.end_date).toLocaleDateString() : 'TBD'}</div>
                                     </div>
                                     <div className={styles.infoItem}>
                                         <label className={styles.infoLabel}>Status</label>

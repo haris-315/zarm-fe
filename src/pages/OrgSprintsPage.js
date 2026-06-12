@@ -66,14 +66,14 @@ export const OrgSprintsPage = () => {
                                     <h3 className={styles.cardTitle}>{sprint.title}</h3>
                                     <Badge status={sprint.status}>{sprint.status}</Badge>
                                 </div>
-                                {sprint.engagement_name && (
-                                    <p className={styles.engagement}>{sprint.engagement_name}</p>
+                                {sprint.description && (
+                                    <p className={styles.engagement}>{sprint.description}</p>
                                 )}
                                 <div className={styles.dayPips}>
                                     {DAY_LABELS.map((label, i) => {
                                         const day = i + 1;
-                                        const isDone = day < sprint.current_day;
-                                        const isCurrent = day === sprint.current_day;
+                                        const isDone = day < sprint.current_day_number;
+                                        const isCurrent = day === sprint.current_day_number;
                                         return (
                                             <div
                                                 key={i}
@@ -84,10 +84,10 @@ export const OrgSprintsPage = () => {
                                     })}
                                 </div>
                                 <div className={styles.cardFooter}>
-                                    <span>Day {sprint.current_day} of 5</span>
+                                    <span>Day {sprint.current_day_number} of 5</span>
                                     <span>
-                                        {new Date(sprint.scheduled_start).toLocaleDateString()} →{' '}
-                                        {new Date(sprint.scheduled_end).toLocaleDateString()}
+                                        {sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : 'TBD'} →{' '}
+                                        {sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : 'TBD'}
                                     </span>
                                 </div>
                             </div>
