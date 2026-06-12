@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../context/authStore';
 import styles from './AppShell.module.css';
+import PushNotificationManager from './PushNotificationManager';
 
 export const AppShell = ({ children, title, actions }) => {
   const { user, roles, permissions, logout } = useAuthStore();
@@ -116,7 +117,10 @@ export const AppShell = ({ children, title, actions }) => {
           <div className={styles.topBarActions}>{actions}</div>
         </header>
         <div className={styles.content}>
-          <div className={styles.contentInner}>{children}</div>
+          <div className={styles.contentInner}>
+            <PushNotificationManager />
+            {children}
+          </div>
         </div>
       </main>
     </div>
