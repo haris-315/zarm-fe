@@ -52,3 +52,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+.stepIndicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.activeStep {
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 2px;
+}
+
+.inactiveStep {
+  color: var(--text-tertiary);
+}
+
+.stepSeparator {
+  color: var(--text-tertiary);
+}

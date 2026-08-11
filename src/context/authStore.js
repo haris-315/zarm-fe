@@ -130,6 +130,38 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
+    personalSignup: async (signupData) => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await authAPI.personalSignup(signupData);
+            set({ isLoading: false });
+            return response;
+        } catch (error) {
+            set({ error: extractApiError(error), isLoading: false });
+            throw error;
+        }
+    },
+
+    submitOrganizationInfo: async (orgData) => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await authAPI.submitOrganizationInfo(orgData);
+            const userData = await userAPI.getMe();
+            const { roles, permissions, organization } = normalizeUserData(userData);
+            set({
+                user: userData,
+                roles,
+                permissions,
+                organization,
+                isLoading: false,
+            });
+            return response;
+        } catch (error) {
+            set({ error: extractApiError(error), isLoading: false });
+            throw error;
+        }
+    },
+
     login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../context/authStore';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { cohortAPI } from '../api';
 import { Badge } from '../components/Badge';
 import styles from './LoginPage.module.css';
 
@@ -44,9 +45,27 @@ export const LoginPage = () => {
             if (state.user?.organization_id) {
                 const orgStatus = state.organization?.status;
                 if (orgStatus === 'pending') {
+                    try {
+                        const cohortInfo = await cohortAPI.getUpcoming();
+                        if (cohortInfo && cohortInfo.has_cohort) {
+                            navigate('/dashboard');
+                            return;
+                        }
+                    } catch (e) {
+                        // Fall through
+                    }
                     setLocalError('Your organization registration is pending approval.');
                     return;
                 } else if (orgStatus === 'rejected') {
+                    try {
+                        const cohortInfo = await cohortAPI.getUpcoming();
+                        if (cohortInfo && cohortInfo.has_cohort) {
+                            navigate('/dashboard');
+                            return;
+                        }
+                    } catch (e) {
+                        // Fall through
+                    }
                     setLocalError('Your organization registration was rejected.');
                     return;
                 } else if (orgStatus === 'suspended') {

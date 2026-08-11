@@ -8,6 +8,8 @@ import { Button } from '../components/Button';
 import { StatCard } from '../components/StatCard';
 import { Skeleton } from '../components/Skeleton';
 import styles from './DashboardPage.module.css';
+import { cohortAPI } from '../api';
+import { Input } from '../components/Input';
 
 export const DashboardPage = () => {
     const navigate = useNavigate();
@@ -16,7 +18,41 @@ export const DashboardPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const [cohortInfo, setCohortInfo] = useState(null);
+    const [cohortLoading, setCohortLoading] = useState(true);
+    const [accessCode, setAccessCode] = useState('');
+    const [verifyingCode, setVerifyingCode] = useState(false);
+    const [verifyError, setVerifyError] = useState('');
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
     const isOrgAdmin = roles.includes('org_admin') || roles.includes('manager');
+
+    const fetchCohort = async () => {
+        try {
+            setCohortLoading(true);
+            const info = await cohortAPI.getUpcoming();
+            setCohortInfo(info);
+        } catch (err) {
+            console.error('Failed to load cohort info:', err);
+        } finally {
+            setCohortLoading(false);
+        }
+    };
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            if (organization?.id) {
+                const sprintsData = await sprintAPI.listSprints(organization.id);
+                setSprints(sprintsData.items || []);
+            }
+        } catch (err) {
+            setError('Failed to load sprints');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         // super_admin → admin panel
@@ -37,23 +73,61 @@ export const DashboardPage = () => {
             return;
         }
 
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                if (organization?.id) {
-                    const sprintsData = await sprintAPI.listSprints(organization.id);
-                    setSprints(sprintsData.items || []);
-                }
-            } catch (err) {
-                setError('Failed to load sprints');
-                console.error(err);
-            } finally {
-                setLoading(false);
+        fetchData();
+        if (user) {
+            fetchCohort();
+        }
+    }, [roles, navigate, user, organization?.id]);
+
+    useEffect(() => {
+        if (!cohortInfo || !cohortInfo.start_time) return;
+
+        const calculateTimeLeft = () => {
+            const difference = +new Date(cohortInfo.start_time) - +new Date();
+            let tempTimeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+            if (difference > 0) {
+                tempTimeLeft = {
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((difference / 1000 / 60) % 60),
+                    seconds: Math.floor((difference / 1000) % 60)
+                };
             }
+            return tempTimeLeft;
         };
 
-        fetchData();
-    }, [roles, navigate, user?.user_type, organization?.id]);
+        setTimeLeft(calculateTimeLeft());
+
+        const timer = setInterval(() => {
+            const calculated = calculateTimeLeft();
+            setTimeLeft(calculated);
+
+            // Auto-refresh when countdown hits zero
+            const difference = +new Date(cohortInfo.start_time) - +new Date();
+            if (difference <= 0 && cohortInfo.cohort_status?.toUpperCase() === 'SCHEDULED') {
+                clearInterval(timer);
+                fetchCohort();
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [cohortInfo]);
+
+    const handleVerifyCode = async (e) => {
+        e.preventDefault();
+        setVerifyError('');
+        setVerifyingCode(true);
+        try {
+            await cohortAPI.verifyCode(accessCode);
+            const info = await cohortAPI.getUpcoming();
+            setCohortInfo(info);
+        } catch (err) {
+            setVerifyError(err.response?.data?.detail || 'Invalid or expired access code.');
+        } finally {
+            setVerifyingCode(false);
+        }
+    };
 
     const handleAvatarUpload = async (e) => {
         const file = e.target.files[0];
@@ -85,6 +159,193 @@ export const DashboardPage = () => {
 
     const activeSprints = sprints.filter((s) => s.status === 'in_progress');
     const completedSprints = sprints.filter((s) => s.status === 'complete' || s.status === 'completed');
+
+    if (loading || cohortLoading) {
+        return (
+            <AppShell title="Dashboard">
+                <div style={{ padding: '24px' }}>
+                    <Skeleton height="80px" count={3} />
+                </div>
+            </AppShell>
+        );
+    }
+
+    if (cohortInfo && cohortInfo.has_cohort && !cohortInfo.code_verified) {
+        return (
+            <AppShell title="Cohort Verification">
+                <div className={styles.verifyContainer}>
+                    <div className={styles.verifyCard}>
+                        <h2 className={styles.verifyTitle}>Cohort Assessment Access</h2>
+                        <div className={styles.verifyInfo}>
+                            <p>
+                                You are registered in cohort: <strong>{cohortInfo.cohort_name}</strong>
+                            </p>
+                            <p>
+                                Start Time: <strong>{new Date(cohortInfo.start_time).toLocaleString()}</strong>
+                            </p>
+                            <p>
+                                Approval Status:{' '}
+                                <Badge
+                                    status={
+                                        cohortInfo.member_status?.toLowerCase() === 'approved'
+                                            ? 'complete'
+                                            : cohortInfo.member_status?.toLowerCase() === 'rejected'
+                                            ? 'suspended'
+                                            : 'planning'
+                                    }
+                                >
+                                    {cohortInfo.member_status?.toUpperCase() || 'PENDING'}
+                                </Badge>
+                            </p>
+                        </div>
+
+                        {cohortInfo.member_status?.toLowerCase() === 'pending' && (
+                            <div className={`${styles.statusBox} ${styles.pendingBox}`}>
+                                <p>Your signup is pending approval by the administrator.</p>
+                                <p className={styles.mutedText}>
+                                    Once approved, you will receive an email containing your unique access code.
+                                    Please return to this page and verify your code once the cohort starts.
+                                </p>
+                            </div>
+                        )}
+
+                        {cohortInfo.member_status?.toLowerCase() === 'rejected' && (
+                            <div className={`${styles.statusBox} ${styles.rejectedBox}`}>
+                                <p>Your application was not approved for this cohort.</p>
+                                <p className={styles.mutedText}>
+                                    If you believe this is in error, please contact your administrator or support.
+                                </p>
+                            </div>
+                        )}
+
+                        {cohortInfo.member_status?.toLowerCase() === 'approved' && cohortInfo.cohort_status?.toUpperCase() === 'SCHEDULED' && (
+                            <div className={styles.approvedWaitBox}>
+                                <p>Your application is approved! 🎉</p>
+                                <p className={styles.mutedText}>
+                                    Your access code will be emailed to you 10 minutes before the cohort starts. 
+                                    Please keep this tab open or return when the countdown ends.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Countdown Timer */}
+                        {cohortInfo.cohort_status?.toUpperCase() === 'SCHEDULED' && (
+                            <div className={styles.countdownContainer}>
+                                <div className={styles.countdownLabel}>Cohort Starts In</div>
+                                <div className={styles.countdownGrid}>
+                                    <div className={styles.countdownItem}>
+                                        <span className={styles.countdownValue}>{String(timeLeft.days).padStart(2, '0')}</span>
+                                        <span className={styles.countdownUnit}>Days</span>
+                                    </div>
+                                    <div className={styles.countdownItem}>
+                                        <span className={styles.countdownValue}>{String(timeLeft.hours).padStart(2, '0')}</span>
+                                        <span className={styles.countdownUnit}>Hours</span>
+                                    </div>
+                                    <div className={styles.countdownItem}>
+                                        <span className={styles.countdownValue}>{String(timeLeft.minutes).padStart(2, '0')}</span>
+                                        <span className={styles.countdownUnit}>Mins</span>
+                                    </div>
+                                    <div className={styles.countdownItem}>
+                                        <span className={styles.countdownValue}>{String(timeLeft.seconds).padStart(2, '0')}</span>
+                                        <span className={styles.countdownUnit}>Secs</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Access Code Form (Only shown when approved AND cohort is active) */}
+                        {cohortInfo.member_status?.toLowerCase() === 'approved' && cohortInfo.cohort_status?.toUpperCase() === 'ACTIVE' && (
+                            <form onSubmit={handleVerifyCode} className={styles.verifyForm}>
+                                <p className={styles.instructionText}>
+                                    The cohort has started! Please enter your unique single-use access code below to unlock your dashboard and begin.
+                                </p>
+                                
+                                {verifyError && (
+                                    <div className={styles.verifyError}>
+                                        <Badge status="suspended">{verifyError}</Badge>
+                                    </div>
+                                )}
+
+                                <Input
+                                    label="Enter Cohort Access Code"
+                                    placeholder="e.g. A1B2C3D4"
+                                    value={accessCode}
+                                    onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                                    required
+                                    disabled={verifyingCode}
+                                />
+                                <Button type="submit" loading={verifyingCode} className={styles.verifyButton}>
+                                    Verify and Join Assessment
+                                </Button>
+                            </form>
+                        )}
+                        {cohortInfo.access_code && (
+                            <div style={{
+                                marginTop: '24px',
+                                padding: '16px',
+                                background: '#1e293b',
+                                border: '1px dashed #64748b',
+                                borderRadius: '8px',
+                                color: '#e2e8f0',
+                                textAlign: 'center'
+                            }}>
+                                <h4 style={{ margin: '0 0 8px 0', color: '#f59e0b', fontSize: '14px' }}>👨‍💻 Developer Bypass Tool</h4>
+                                <p style={{ fontSize: '12px', margin: '0 0 12px 0', color: '#94a3b8' }}>
+                                    Local environment detected. You can instantly bypass the timer and enter the assessment.
+                                </p>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={cohortInfo.access_code}
+                                        style={{
+                                            background: '#0f172a',
+                                            border: '1px solid #334155',
+                                            borderRadius: '4px',
+                                            padding: '4px 8px',
+                                            color: '#38bdf8',
+                                            fontFamily: 'monospace',
+                                            fontSize: '13px',
+                                            textAlign: 'center',
+                                            width: '140px'
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            setAccessCode(cohortInfo.access_code);
+                                            setVerifyingCode(true);
+                                            try {
+                                                await cohortAPI.verifyCode(cohortInfo.access_code);
+                                                const info = await cohortAPI.getUpcoming();
+                                                setCohortInfo(info);
+                                            } catch (err) {
+                                                setVerifyError(err.response?.data?.detail || 'Bypass failed.');
+                                            } finally {
+                                                setVerifyingCode(false);
+                                            }
+                                        }}
+                                        style={{
+                                            background: '#f59e0b',
+                                            color: '#0f172a',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            padding: '6px 12px',
+                                            fontWeight: 'bold',
+                                            cursor: 'pointer',
+                                            fontSize: '12px'
+                                        }}
+                                    >
+                                        Bypass & Start
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </AppShell>
+        );
+    }
 
     return (
         <AppShell title="Dashboard">

@@ -372,3 +372,143 @@
   color: var(--text-secondary);
   max-width: 320px;
 }
+
+.verifyContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 24px;
+  min-height: 60vh;
+}
+
+.verifyCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: var(--shadow-md);
+}
+
+.verifyTitle {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.verifyInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-inset);
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  font-size: var(--text-sm);
+}
+
+.statusBox {
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+.pendingBox {
+  background: var(--warning-subtle);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
+
+.rejectedBox {
+  background: var(--danger-subtle);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+}
+
+.verifyForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.instructionText {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.verifyError {
+  margin-bottom: 8px;
+}
+
+.verifyButton {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.mutedText {
+  font-size: var(--text-xs);
+  opacity: 0.8;
+  margin-top: 8px;
+}
+
+.countdownContainer {
+  margin: 24px 0;
+  text-align: center;
+}
+
+.countdownLabel {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.countdownGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.countdownItem {
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.countdownValue {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdownUnit {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.approvedWaitBox {
+  background: var(--success-subtle);
+  color: var(--success);
+  border: 1px solid rgba(var(--success-rgb, 46, 125, 50), 0.2);
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  margin-bottom: 24px;
+}

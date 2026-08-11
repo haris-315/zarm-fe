@@ -9,6 +9,9 @@ const apiClient = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    validateStatus: (status) => {
+        return (status >= 200 && status < 300) || status === 304;
+    }
 });
 
 let isRefreshing = false;
