@@ -43,7 +43,7 @@ export const OrganizationDetail = () => {
     useEffect(() => {
         if (selectedOrganization) {
             setFormData({
-                name: selectedOrganization.name || '',
+                nameecle: selectedOrganization.name || '',
                 industry: selectedOrganization.industry || '',
                 headcount: selectedOrganization.headcount || '',
                 annual_revenue: selectedOrganization.annual_revenue || '',
